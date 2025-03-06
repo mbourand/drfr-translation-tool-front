@@ -40,12 +40,18 @@ export const AuthConfirmView = () => {
 
   useEffect(() => {
     if (!isSuccess) return
-    store.set('access-token', data.accessToken)
-    store.set('refresh-token', data.refreshToken)
-    navigate(TRANSLATION_APP_PAGES.HOME)
+
+    const saveTokens = async () => {
+      await store.set('access-token', data.accessToken)
+      await store.set('refresh-token', data.refreshToken)
+      await store.save()
+      navigate(TRANSLATION_APP_PAGES.HOME)
+    }
+
+    saveTokens()
   }, [isSuccess])
 
-  if (isError) return <main>Une erreur est survenue, veuillez contacter les administrateurs : {error.message}</main>
+  if (isError) return <main>Une erreur est survenue, veuillez contacter un administrateur : {error.message}</main>
   if (isPending) return <main>Chargement...</main>
 
   return <main>Vous êtes connecté ! Redirection en cours...</main>
