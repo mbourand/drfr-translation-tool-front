@@ -1,7 +1,7 @@
 import './App.css'
 
 import { BrowserRouter, Route, Routes } from 'react-router'
-import { TRANSLATION_APP_PAGES } from './urls'
+import { TRANSLATION_APP_PAGES } from './routes/pages/routes'
 import { HomeView } from './views/HomeView'
 import { lazy } from 'react'
 

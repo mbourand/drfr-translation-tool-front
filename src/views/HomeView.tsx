@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router'
-import { TRANSLATION_APP_PAGES } from '../urls'
+import { TRANSLATION_APP_PAGES } from '../routes/pages/routes'
 import { useEffect } from 'react'
 
 export const HomeView = () => {
