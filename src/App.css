@@ -1,2 +1,10 @@
 @import 'tailwindcss';
 @plugin "daisyui";
+
+body {
+  @apply m-0 p-0 w-full h-full relative;
+}
+
+html {
+  scrollbar-gutter: auto !important;
+}
