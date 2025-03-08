@@ -21,6 +21,12 @@ export const TRANSLATION_API_URLS = {
       url: `${ENV.TRANSLATION_API_BASE_URL}/translation/list`,
       method: 'GET',
       responseSchema: TranslationSchema.array()
+    },
+    CREATE: {
+      url: `${ENV.TRANSLATION_API_BASE_URL}/translation`,
+      method: 'POST',
+      bodySchema: z.object({ name: z.string() }),
+      responseSchema: TranslationSchema
     }
   }
 } as const

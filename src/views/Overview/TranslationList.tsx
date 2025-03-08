@@ -1,4 +1,5 @@
 import { ReactNode } from 'react'
+import { To, useNavigate } from 'react-router'
 import { twMerge } from 'tailwind-merge'
 
 type TranslationListProps = {
@@ -8,7 +9,7 @@ type TranslationListProps = {
     title: string
     author: string
     authorAvatar: string
-    onClick?: () => void
+    href: To
   }[]
   className?: string
   flexClassName?: string
@@ -22,6 +23,8 @@ export const TranslationList = ({
   flexClassName,
   extraElements
 }: TranslationListProps) => {
+  const navigate = useNavigate()
+
   return (
     <div className={twMerge('rounded-box shadow-md border border-base-200', className)}>
       <h2 className="p-4 pb-2 text-xl font-semibold tracking-wide">{title}</h2>
@@ -29,8 +32,8 @@ export const TranslationList = ({
         {translations.map((translation) => (
           <button
             key={translation.id}
-            className="border border-base-200 rounded-box p-4 group text-left mb-4"
-            onClick={translation.onClick}
+            className="border border-base-200 rounded-box p-4 group text-left mb-4 cursor-pointer"
+            onClick={() => navigate(translation.href)}
           >
             <h3 className="text-lg font-semibold group-hover:underline underline-offset-2 mb-4">{translation.title}</h3>
             <div className="flex flex-row justify-end items-center gap-2">
