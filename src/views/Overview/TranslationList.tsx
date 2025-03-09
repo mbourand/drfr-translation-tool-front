@@ -32,7 +32,7 @@ export const TranslationList = ({
         {translations.map((translation) => (
           <button
             key={translation.id}
-            className="border border-base-200 rounded-box p-4 group text-left mb-4 cursor-pointer"
+            className="border border-base-200 rounded-box p-4 group text-left mb-4 cursor-pointer hover:shadow-md"
             onClick={() => navigate(translation.href)}
           >
             <h3 className="text-lg font-semibold group-hover:underline underline-offset-2 mb-4">{translation.title}</h3>

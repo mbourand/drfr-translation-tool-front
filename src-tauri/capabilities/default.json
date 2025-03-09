@@ -12,6 +12,7 @@
       "allow": ["http://localhost:1420", "http://localhost:3000"]
     },
     "shell:default",
-    "store:default"
+    "store:default",
+    "core:webview:allow-set-webview-zoom"
   ]
 }

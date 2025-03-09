@@ -19,8 +19,8 @@ const mapPRToTranslation = (pr: TranslationType, isYours: boolean) => ({
   author: pr.user.login,
   authorAvatar: pr.user.avatar_url,
   href: isYours
-    ? TRANSLATION_APP_PAGES.TRANSLATION.EDIT(pr.id.toString())
-    : TRANSLATION_APP_PAGES.TRANSLATION.REVIEW(pr.id.toString())
+    ? TRANSLATION_APP_PAGES.TRANSLATION.EDIT(pr.head.ref.toString())
+    : TRANSLATION_APP_PAGES.TRANSLATION.REVIEW(pr.head.ref.toString())
 })
 
 const getTranslations = async () => {

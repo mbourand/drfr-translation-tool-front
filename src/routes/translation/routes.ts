@@ -27,6 +27,19 @@ export const TRANSLATION_API_URLS = {
       method: 'POST',
       bodySchema: z.object({ name: z.string() }),
       responseSchema: TranslationSchema
-    }
+    },
+    FILES: (branch: string) =>
+      ({
+        url: `${ENV.TRANSLATION_API_BASE_URL}/translation/files?branch=${branch}`,
+        method: 'GET',
+        responseSchema: z
+          .object({
+            original: z.string(),
+            translated: z.string(),
+            name: z.string(),
+            category: z.string()
+          })
+          .array()
+      } as const)
   }
 } as const
