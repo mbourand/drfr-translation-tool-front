@@ -31,7 +31,7 @@ export const CreateTranslationModal = ({ isVisible, onClose }: CreateTranslation
     mutationFn: createTranslation,
     onSuccess: async (data) => {
       onClose()
-      await navigate(TRANSLATION_APP_PAGES.TRANSLATION.EDIT(data.head.ref))
+      await navigate(TRANSLATION_APP_PAGES.TRANSLATION.EDIT(data.head.ref, data.title))
     }
   })
 

@@ -1,15 +1,49 @@
-import { NavLink, useParams } from 'react-router'
+import { NavLink, useParams, useSearchParams } from 'react-router'
 import { TRANSLATION_APP_PAGES } from '../../../routes/pages/routes'
 import { useQuery } from '@tanstack/react-query'
 import { fetchData } from '../../../fetching/fetcher'
 import { TRANSLATION_API_URLS } from '../../../routes/translation/routes'
 import { store, STORE_KEYS, StoreUserInfos } from '../../../store/store'
-import { useMemo, useRef, useState } from 'react'
-import { twMerge } from 'tailwind-merge'
-import { SidePanel } from './SidePanel'
-import { PageSelector } from './PageSelector'
+import { useMemo, useState } from 'react'
+import { SidePanel, SidePanelFileType } from './SidePanel'
+import { AgGridReact } from 'ag-grid-react'
+import { themeQuartz } from 'ag-grid-community'
 
-const PAGE_SIZE = 5000
+export const myTheme = themeQuartz.withParams({
+  backgroundColor: 'var(--color-base-100)',
+  foregroundColor: 'var(--color-base-200)',
+  headerTextColor: 'var(--color-base-content)',
+  textColor: 'var(--color-base-content)',
+  headerBackgroundColor: 'var(--color-base-200)',
+  oddRowBackgroundColor: 'var(--color-base-200)',
+  borderColor: 'rgb(from var(--color-base-content) r g b / 0.1)'
+})
+
+type FileType = {
+  category: string
+  name: string
+  lines: { lineNumber: number; original: string; translated: string }[]
+}
+
+const makeLineKey = (file: SidePanelFileType, line: number) => `${file.category}/${file.name}:${line}`
+
+const computeFileContentsAfterChanges = async (files: FileType[], changes: Map<string, string>) => {
+  const newFiles = [...files]
+  for (const [key, value] of changes.entries()) {
+    const matches = key.match(/(.+)\/(.+):(\d+)/)
+    if (!matches) continue
+    const category = matches[1]
+    const name = matches[2]
+    const lineNumber = parseInt(matches[3])
+
+    const fileIndex = newFiles.findIndex((file) => file.category === category && file.name === name)
+    if (fileIndex === -1) continue
+
+    newFiles[fileIndex].lines[lineNumber].translated = value
+  }
+
+  return newFiles
+}
 
 const isTechnicalString = (line: string) =>
   line.trim() === '' ||
@@ -23,9 +57,11 @@ const isTechnicalString = (line: string) =>
 
 export const EditTranslationView = () => {
   const branch = useParams().branch
-  const [currentPage, setCurrentPage] = useState(0)
-  const linesRef = useRef<HTMLDivElement>(null)
-  const [selectedFile, setSelectedFile] = useState<{ category: string; name: string } | null>(null)
+  const [searchParams] = useSearchParams()
+  const prName = searchParams.get('name') ?? ''
+  const [selectedFile, setSelectedFile] = useState<SidePanelFileType | null>(null)
+
+  const [changedLines, setChangedLines] = useState(new Map<string, string>())
 
   const filesDownloadUrls = useQuery({
     queryKey: ['files', branch],
@@ -72,11 +108,9 @@ export const EditTranslationView = () => {
             }))
             .filter(({ original, translated }) => !isTechnicalString(original) || !isTechnicalString(translated))
 
-          return {
-            lines,
-            name: file.name,
-            category: file.category
-          }
+          const afterChanges = await computeFileContentsAfterChanges([{ ...file, lines }], changedLines)
+
+          return { ...afterChanges[0] }
         })
       )
     },
@@ -101,73 +135,53 @@ export const EditTranslationView = () => {
       <SidePanel
         title="Fichiers de traduction"
         categories={fileNamesByCategory}
-        onSelected={(selected) => {
-          setSelectedFile(selected)
-          setCurrentPage(0)
-        }}
+        onSelected={(selected) => setSelectedFile(selected)}
         selected={selectedFile}
       />
-      <div className="mx-auto px-4">
+      <div className="flex flex-col items-center w-full px-4">
         <NavLink to={TRANSLATION_APP_PAGES.OVERVIEW}>Retour à l'accueil</NavLink>
-        <h1 className="text-3xl font-semibold text-center mb-8">{branch}</h1>
+        <h1 className="text-3xl font-semibold text-center mb-8">{prName}</h1>
         {fileContents.isPending && <div>Téléchargement des fichiers...</div>}
         {fileContents.isError && <div>Erreur lors du téléchargement des fichiers {fileContents.error.message}</div>}
-        {selectedFileContents && (
-          <div className="w-full max-w-[1700px] mx-auto relative">
-            <div
-              className="w-full h-[calc(100svh-200px)] overflow-auto border-x border-y border-base-200 mb-2 rounded-lg"
-              ref={linesRef}
-            >
-              <div className="sticky top-0 left-0 w-full bg-base-100 z-10 shadow">
-                <span className="inline-block w-[60px] pr-1 border-r border-base-200 break-words text-right opacity-70 py-2"></span>
-                <span className="inline-block w-[calc(50%-30px)] border-r border-base-200 break-words py-2 pl-4 font-semibold text-lg">
-                  Version anglaise
-                </span>
-                <span className="inline-block w-[calc(50%-30px)] py-2 pl-4 font-semibold text-lg">
-                  Version française
-                </span>
-              </div>
-              {selectedFileContents.lines
-                .slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE)
-                .map(({ translated, original, lineNumber }, i) => (
-                  <>
-                    <span
-                      className={twMerge(
-                        'inline-block w-[60px] pr-1 break-words text-right opacity-70 py-2 border-r border-base-200',
-                        i % 2 === 1 ? 'bg-base-100' : 'bg-base-200'
-                      )}
-                    >
-                      {lineNumber}
-                    </span>
-                    {/* Va savoir pourquoi min-w-0 répare les word break ??? */}
-                    <span
-                      className={twMerge(
-                        'inline-block min-w-0 w-[calc(50%-30px)] break-words py-2 pl-4 border-r border-base-200',
-                        i % 2 === 1 ? 'bg-base-100' : 'bg-base-200'
-                      )}
-                    >
-                      {original}
-                    </span>
-                    <span
-                      className={twMerge(
-                        'inline-block min-w-0 w-[calc(50%-30px)] break-words py-2 pl-4',
-                        i % 2 === 1 ? 'bg-base-100' : 'bg-base-200'
-                      )}
-                    >
-                      {translated}
-                    </span>
-                    <br />
-                  </>
-                ))}
-            </div>
-            <PageSelector
-              currentPage={currentPage}
-              entryCount={selectedFileContents.lines.length}
-              pageSize={PAGE_SIZE}
-              onPageSelected={(page) => {
-                linesRef.current?.scrollTo({ top: 0 })
-                setCurrentPage(page)
+        {selectedFileContents && selectedFile && (
+          <div className="w-full h-full pb-4">
+            <AgGridReact
+              theme={myTheme}
+              className="w-full max-w-[1700px] relative h-[calc(100svh-200px)]"
+              rowData={selectedFileContents.lines}
+              rowClassRules={{
+                'ag-cell-changed': ({ data }) =>
+                  !!data && changedLines.has(`${selectedFile?.category}/${selectedFile?.name}:${data.lineNumber}`)
               }}
+              columnDefs={[
+                { field: 'lineNumber', headerName: '', width: 80 },
+                {
+                  field: 'original',
+                  headerName: 'Version anglaise',
+                  autoHeight: true,
+                  wrapText: true,
+                  flex: 1,
+                  cellClass: 'leading-6!'
+                },
+                {
+                  field: 'translated',
+                  headerName: 'Version française',
+                  autoHeight: true,
+                  wrapText: true,
+                  flex: 1,
+                  editable: true,
+                  cellEditor: 'agTextCellEditor',
+                  cellClass: 'leading-6!',
+                  onCellValueChanged: async ({ data, newValue }) => {
+                    const key = makeLineKey(selectedFile, data.lineNumber)
+                    setChangedLines((prev) => {
+                      if (data.original === newValue) prev.delete(key)
+                      else prev.set(key, newValue)
+                      return new Map(prev)
+                    })
+                  }
+                }
+              ]}
             />
           </div>
         )}
