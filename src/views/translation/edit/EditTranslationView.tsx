@@ -1,4 +1,4 @@
-import { NavLink, useParams, useSearchParams } from 'react-router'
+import { NavLink, useNavigate, useParams, useSearchParams } from 'react-router'
 import { TRANSLATION_APP_PAGES } from '../../../routes/pages/routes'
 import { useQuery } from '@tanstack/react-query'
 import { fetchData } from '../../../fetching/fetcher'
@@ -133,6 +133,13 @@ export const EditTranslationView = () => {
     [fileContents.data, selectedFile]
   )
 
+  const navigate = useNavigate()
+
+  if (!branch) {
+    navigate(TRANSLATION_APP_PAGES.OVERVIEW)
+    return null
+  }
+
   return (
     <div className="flex flex-row">
       <SidePanel
@@ -140,6 +147,7 @@ export const EditTranslationView = () => {
         categories={fileNamesByCategory}
         onSelected={(selected) => setSelectedFile(selected)}
         selected={selectedFile}
+        branch={branch}
       />
       <div className="flex flex-col items-center w-full px-4">
         <NavLink to={TRANSLATION_APP_PAGES.OVERVIEW}>Retour à l'accueil</NavLink>

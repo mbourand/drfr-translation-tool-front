@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { FolderIcon } from '../../../components/icons/FolderIcon'
 import { SaveChangesModal } from './SaveChangesModal'
+import { SubmitToReviewButton } from './SubmitToReviewButton'
 
 export type SidePanelFileType = {
   category: string
@@ -12,9 +13,10 @@ type SidePanelProps = {
   categories: Record<string, string[]>
   onSelected: (file: SidePanelFileType) => void
   selected: SidePanelFileType | null
+  branch: string
 }
 
-export const SidePanel = ({ categories, onSelected, selected, title }: SidePanelProps) => {
+export const SidePanel = ({ categories, onSelected, selected, title, branch }: SidePanelProps) => {
   const [isSaveModalVisible, setIsSaveModalVisible] = useState(false)
 
   return (
@@ -52,7 +54,7 @@ export const SidePanel = ({ categories, onSelected, selected, title }: SidePanel
             ))}
             <div className="mt-auto flex flex-col gap-3">
               <button className="btn btn-soft btn-primary">Lancer le jeu</button>
-              <button className="btn btn-soft btn-primary">Soumettre à la correction</button>
+              <SubmitToReviewButton branch={branch} />
               <button className="btn btn-primary" onClick={() => setIsSaveModalVisible(true)}>
                 Sauvegarder
               </button>

@@ -92,7 +92,7 @@ export const OverviewView = () => {
 
   return (
     <>
-      <main className="h-screen mx-auto max-w-[1700px] w-full flex flex-col gap-8 py-8">
+      <main className="h-screen mx-auto max-w-[1700px] w-full flex flex-col gap-8 py-8 px-4">
         <h1 className="text-center text-4xl font-bold">Vue d'ensemble</h1>
         <section className="flex flex-row w-full gap-2 h-full relative">
           {translationLists.map((list) => (

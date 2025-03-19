@@ -28,6 +28,12 @@ export const TRANSLATION_API_URLS = {
       bodySchema: z.object({ name: z.string() }),
       responseSchema: TranslationSchema
     },
+    SUBMIT_TO_REVIEW: {
+      url: `${ENV.TRANSLATION_API_BASE_URL}/translation/submit-to-review`,
+      method: 'POST',
+      bodySchema: z.object({ branch: z.string() }),
+      responseSchema: z.object({ success: z.boolean() })
+    },
     FILES: (branch: string) =>
       ({
         url: `${ENV.TRANSLATION_API_BASE_URL}/translation/files?branch=${branch}`,

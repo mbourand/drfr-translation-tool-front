@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Modal } from '../../../components/Modal'
 import { useMutation } from '@tanstack/react-query'
 
