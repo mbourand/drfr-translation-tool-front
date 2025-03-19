@@ -16,7 +16,10 @@ export const myTheme = themeQuartz.withParams({
   textColor: 'var(--color-base-content)',
   headerBackgroundColor: 'var(--color-base-200)',
   oddRowBackgroundColor: 'var(--color-base-200)',
-  borderColor: 'rgb(from var(--color-base-content) r g b / 0.1)'
+  borderColor: 'rgb(from var(--color-base-content) r g b / 0.1)',
+  iconColor: 'var(--color-base-content)',
+  menuTextColor: 'var(--color-base-content)',
+  inputPlaceholderTextColor: 'var(--color-base-content)'
 })
 
 type FileType = {
@@ -154,14 +157,18 @@ export const EditTranslationView = () => {
                   !!data && changedLines.has(`${selectedFile?.category}/${selectedFile?.name}:${data.lineNumber}`)
               }}
               columnDefs={[
-                { field: 'lineNumber', headerName: '', width: 80 },
+                { field: 'lineNumber', headerName: 'N°', width: 80, sortable: false },
                 {
                   field: 'original',
                   headerName: 'Version anglaise',
                   autoHeight: true,
                   wrapText: true,
                   flex: 1,
-                  cellClass: 'leading-6!'
+                  cellClass: 'leading-6!',
+                  sortable: false,
+                  filter: 'agTextColumnFilter',
+                  suppressHeaderFilterButton: true,
+                  floatingFilter: true
                 },
                 {
                   field: 'translated',
@@ -170,6 +177,7 @@ export const EditTranslationView = () => {
                   wrapText: true,
                   flex: 1,
                   editable: true,
+                  sortable: false,
                   cellEditor: 'agTextCellEditor',
                   cellClass: 'leading-6!',
                   onCellValueChanged: async ({ data, newValue }) => {
@@ -179,7 +187,10 @@ export const EditTranslationView = () => {
                       else prev.set(key, newValue)
                       return new Map(prev)
                     })
-                  }
+                  },
+                  filter: 'agTextColumnFilter',
+                  suppressHeaderFilterButton: true,
+                  floatingFilter: true
                 }
               ]}
             />
