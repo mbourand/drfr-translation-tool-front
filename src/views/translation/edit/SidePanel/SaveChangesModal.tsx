@@ -1,18 +1,37 @@
-import { Modal } from '../../../components/Modal'
+import { Modal } from '../../../../components/Modal'
 import { useMutation } from '@tanstack/react-query'
-import { fetchData } from '../../../fetching/fetcher'
-import { TRANSLATION_API_URLS } from '../../../routes/translation/routes'
-import { store, STORE_KEYS, StoreUserInfos } from '../../../store/store'
+import { fetchData } from '../../../../fetching/fetcher'
+import { TRANSLATION_API_URLS } from '../../../../routes/translation/routes'
+import { store, STORE_KEYS, StoreUserInfos } from '../../../../store/store'
 import { useRef } from 'react'
+import { FileType } from './SidePanel'
 
 type SaveChangesModalProps = {
   isVisible: boolean
   onClose: () => void
   branch: string
-  newFilesAfterChange: () => { path: string; content: string }[]
+  files: FileType[]
+  changes: Map<string, string>
 }
 
-export const SaveChangesModal = ({ onClose, isVisible, branch, newFilesAfterChange }: SaveChangesModalProps) => {
+const computeFileContentsAfterChanges = (files: FileType[], changes: Map<string, string>) => {
+  const newFiles = [...files]
+  for (const [key, value] of changes.entries()) {
+    const matches = key.match(/(.+):(\d+)/)
+    if (!matches) continue
+    const path = matches[1]
+    const lineNumber = parseInt(matches[2], 10)
+
+    const fileIndex = newFiles.findIndex((file) => file.translatedPath === path)
+    if (fileIndex === -1) continue
+
+    newFiles[fileIndex].lines[lineNumber].translated = value
+  }
+
+  return newFiles
+}
+
+export const SaveChangesModal = ({ onClose, isVisible, branch, files, changes }: SaveChangesModalProps) => {
   const titleRef = useRef<HTMLInputElement>(null)
 
   const { isPending, mutate } = useMutation({
@@ -23,13 +42,21 @@ export const SaveChangesModal = ({ onClose, isVisible, branch, newFilesAfterChan
       const userInfos = await store.get<StoreUserInfos>(STORE_KEYS.USER_INFOS)
       if (!userInfos) throw new Error('No token found')
 
+      const filesThatChanged = files.filter((file) =>
+        Array.from(changes.entries()).find(([key]) => key.startsWith(file.translatedPath))
+      )
+      const withAppliedChanges = computeFileContentsAfterChanges(filesThatChanged ?? [], changes)
+
       await fetchData({
         route: TRANSLATION_API_URLS.TRANSLATIONS.SAVE_FILES,
         headers: { Authorization: `Bearer ${userInfos.accessToken}` },
         body: {
           branch,
           message,
-          files: newFilesAfterChange()
+          files: withAppliedChanges.map((file) => ({
+            path: file.translatedPath,
+            content: file.lines.map((line) => line.translated).join('\n')
+          }))
         }
       })
     },

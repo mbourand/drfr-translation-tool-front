@@ -1,24 +1,26 @@
-import { useState } from 'react'
-import { FolderIcon } from '../../../components/icons/FolderIcon'
-import { SaveChangesModal } from './SaveChangesModal'
+import { useMemo } from 'react'
+import { FolderIcon } from '../../../../components/icons/FolderIcon'
+import { SaveChangesButton } from './SaveChangesButton'
 import { SubmitToReviewButton } from './SubmitToReviewButton'
 
-export type SidePanelFileType = {
+export type FileType = {
   name: string
-  path: string
+  translatedPath: string
+  lines: { lineNumber: number; original: string; translated: string }[]
 }
 
 type SidePanelProps = {
   title: string
-  categories: Record<string, SidePanelFileType[]>
-  onSelected: (file: SidePanelFileType) => void
-  selected: SidePanelFileType | null
+  categories: Record<string, FileType[]>
+  onSelected: (file: FileType) => void
+  selected: FileType | null
   branch: string
   newFilesAfterChange?: () => { path: string; content: string }[]
+  changes: Map<string, string>
 }
 
-export const SidePanel = ({ categories, onSelected, selected, title, branch, newFilesAfterChange }: SidePanelProps) => {
-  const [isSaveModalVisible, setIsSaveModalVisible] = useState(false)
+export const SidePanel = ({ categories, onSelected, selected, title, branch, changes }: SidePanelProps) => {
+  const files = useMemo(() => Object.values(categories).flat(), [categories])
 
   return (
     <>
@@ -41,9 +43,13 @@ export const SidePanel = ({ categories, onSelected, selected, title, branch, new
                 </summary>
                 <ul>
                   {files.map((file) => (
-                    <li key={file.path}>
+                    <li key={file.translatedPath}>
                       <button
-                        className={selected?.path === file.path && selected?.path === category ? 'menu-active' : ''}
+                        className={
+                          selected?.translatedPath === file.translatedPath && selected?.translatedPath === category
+                            ? 'menu-active'
+                            : ''
+                        }
                         onClick={() => onSelected(file)}
                       >
                         {file.name}
@@ -56,21 +62,11 @@ export const SidePanel = ({ categories, onSelected, selected, title, branch, new
             <div className="mt-auto flex flex-col gap-3">
               <button className="btn btn-soft btn-primary">Lancer le jeu</button>
               <SubmitToReviewButton branch={branch} />
-              <button className="btn btn-primary" onClick={() => setIsSaveModalVisible(true)}>
-                Sauvegarder
-              </button>
+              <SaveChangesButton branch={branch} changes={changes} files={files} />
             </div>
           </ul>
         </div>
       </div>
-      {branch && newFilesAfterChange && (
-        <SaveChangesModal
-          isVisible={isSaveModalVisible}
-          onClose={() => setIsSaveModalVisible(false)}
-          branch={branch}
-          newFilesAfterChange={newFilesAfterChange}
-        />
-      )}
     </>
   )
 }

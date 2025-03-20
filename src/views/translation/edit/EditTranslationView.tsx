@@ -5,35 +5,10 @@ import { fetchData } from '../../../fetching/fetcher'
 import { TRANSLATION_API_URLS } from '../../../routes/translation/routes'
 import { store, STORE_KEYS, StoreUserInfos } from '../../../store/store'
 import { useMemo, useState } from 'react'
-import { SidePanel, SidePanelFileType } from './SidePanel'
+import { SidePanel, FileType } from './SidePanel/SidePanel'
 import { TranslationGrid } from './TanslationGrid'
 
-type FileType = {
-  category: string
-  name: string
-  lines: { lineNumber: number; original: string; translated: string }[]
-  originalPath: string
-  translatedPath: string
-}
-
-const makeLineKey = (file: SidePanelFileType, line: number) => `${file.path}:${line}`
-
-const computeFileContentsAfterChanges = (files: FileType[], changes: Map<string, string>) => {
-  const newFiles = [...files]
-  for (const [key, value] of changes.entries()) {
-    const matches = key.match(/(.+):(\d+)/)
-    if (!matches) continue
-    const path = matches[1]
-    const lineNumber = parseInt(matches[2], 10)
-
-    const fileIndex = newFiles.findIndex((file) => file.translatedPath === path)
-    if (fileIndex === -1) continue
-
-    newFiles[fileIndex].lines[lineNumber].translated = value
-  }
-
-  return newFiles
-}
+const makeLineKey = (file: FileType, line: number) => `${file.translatedPath}:${line}`
 
 const isTechnicalString = (line: string) =>
   line.trim() === '' ||
@@ -49,7 +24,7 @@ export const EditTranslationView = () => {
   const branch = useParams().branch
   const [searchParams] = useSearchParams()
   const prName = searchParams.get('name') ?? ''
-  const [selectedFile, setSelectedFile] = useState<SidePanelFileType | null>(null)
+  const [selectedFile, setSelectedFile] = useState<FileType | null>(null)
 
   const [changedLines, setChangedLines] = useState(new Map<string, string>())
 
@@ -110,16 +85,16 @@ export const EditTranslationView = () => {
 
   const filesByCategory = useMemo(
     () =>
-      filesDownloadUrls.data?.reduce((acc, file) => {
+      files?.reduce((acc, file) => {
         if (!acc[file.category]) acc[file.category] = []
-        acc[file.category].push({ ...file, path: file.translatedPath })
+        acc[file.category].push(file)
         return acc
-      }, {} as Record<string, SidePanelFileType[]>) ?? {},
-    [filesDownloadUrls.data]
+      }, {} as Record<string, FileType[]>) ?? {},
+    [files]
   )
 
   const selectedFileContents = useMemo(
-    () => files?.find((file) => file.translatedPath === selectedFile?.path),
+    () => files?.find((file) => file.translatedPath === selectedFile?.translatedPath),
     [files, selectedFile]
   )
 
@@ -143,16 +118,7 @@ export const EditTranslationView = () => {
         onSelected={(selected) => setSelectedFile(selected)}
         selected={selectedFile}
         branch={branch}
-        newFilesAfterChange={() => {
-          const filesThatChanged = files?.filter((file) =>
-            Array.from(changedLines.entries()).find(([key]) => key.startsWith(file.translatedPath))
-          )
-          const withAppliedChanges = computeFileContentsAfterChanges(filesThatChanged ?? [], changedLines)
-          return withAppliedChanges.map((file) => ({
-            path: file.translatedPath,
-            content: file.lines.map((line) => line.translated).join('\n')
-          }))
-        }}
+        changes={changedLines}
       />
       <div className="flex flex-col items-center w-full px-4">
         <NavLink to={TRANSLATION_APP_PAGES.OVERVIEW}>Retour à l'accueil</NavLink>
@@ -172,7 +138,7 @@ export const EditTranslationView = () => {
               }}
               linesToShow={filteredLines ?? []}
               changedLineNumbers={Array.from(changedLines.keys())
-                .filter((c) => c.startsWith(selectedFile.path))
+                .filter((c) => c.startsWith(selectedFile.translatedPath))
                 .map((key) => parseInt(key.split(':')[1], 10))}
             />
           </div>
