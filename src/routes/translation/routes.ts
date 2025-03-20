@@ -43,9 +43,26 @@ export const TRANSLATION_API_URLS = {
             original: z.string(),
             translated: z.string(),
             name: z.string(),
-            category: z.string()
+            category: z.string(),
+            originalPath: z.string(),
+            translatedPath: z.string()
           })
           .array()
-      } as const)
+      } as const),
+    SAVE_FILES: {
+      url: `${ENV.TRANSLATION_API_BASE_URL}/translation/files`,
+      method: 'POST',
+      responseSchema: z.object({ success: z.boolean() }),
+      bodySchema: z.object({
+        branch: z.string(),
+        message: z.string(),
+        files: z.array(
+          z.object({
+            path: z.string(),
+            content: z.string()
+          })
+        )
+      })
+    }
   }
 } as const

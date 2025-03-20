@@ -4,10 +4,11 @@ import { TRANSLATION_API_URLS } from '../../routes/translation/routes'
 import { store, STORE_KEYS, StoreUserInfos } from '../../store/store'
 import { TranslationList } from './TranslationList'
 import { AddIcon } from '../../components/icons/AddIcon'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { CreateTranslationModal } from './CreateTranslationModal'
 import { TranslationType } from '../../routes/translation/schemas'
 import { TRANSLATION_APP_PAGES } from '../../routes/pages/routes'
+import { useNavigate } from 'react-router'
 
 const TRANSLATION_LABEL = 'Traduction'
 const WIP_LABEL = 'En cours'
@@ -49,6 +50,7 @@ const getTranslations = async () => {
 }
 
 export const OverviewView = () => {
+  const navigate = useNavigate()
   const [isCreateTranslationModalVisible, setIsCreateTranslationModalVisible] = useState(false)
 
   const { data, isError } = useQuery({
@@ -56,6 +58,10 @@ export const OverviewView = () => {
     queryFn: getTranslations,
     refetchOnMount: 'always'
   })
+
+  if (isError) {
+    store.delete(STORE_KEYS.USER_INFOS).then(() => navigate(TRANSLATION_APP_PAGES.HOME))
+  }
 
   const translationLists = useMemo(() => {
     if (!data) return []

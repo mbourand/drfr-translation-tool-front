@@ -6,40 +6,27 @@ import { TRANSLATION_API_URLS } from '../../../routes/translation/routes'
 import { store, STORE_KEYS, StoreUserInfos } from '../../../store/store'
 import { useMemo, useState } from 'react'
 import { SidePanel, SidePanelFileType } from './SidePanel'
-import { AgGridReact } from 'ag-grid-react'
-import { themeQuartz } from 'ag-grid-community'
-
-export const myTheme = themeQuartz.withParams({
-  backgroundColor: 'var(--color-base-100)',
-  foregroundColor: 'var(--color-base-200)',
-  headerTextColor: 'var(--color-base-content)',
-  textColor: 'var(--color-base-content)',
-  headerBackgroundColor: 'var(--color-base-200)',
-  oddRowBackgroundColor: 'var(--color-base-200)',
-  borderColor: 'rgb(from var(--color-base-content) r g b / 0.1)',
-  iconColor: 'var(--color-base-content)',
-  menuTextColor: 'var(--color-base-content)',
-  inputPlaceholderTextColor: 'var(--color-base-content)'
-})
+import { TranslationGrid } from './TanslationGrid'
 
 type FileType = {
   category: string
   name: string
   lines: { lineNumber: number; original: string; translated: string }[]
+  originalPath: string
+  translatedPath: string
 }
 
-const makeLineKey = (file: SidePanelFileType, line: number) => `${file.category}/${file.name}:${line}`
+const makeLineKey = (file: SidePanelFileType, line: number) => `${file.path}:${line}`
 
-const computeFileContentsAfterChanges = async (files: FileType[], changes: Map<string, string>) => {
+const computeFileContentsAfterChanges = (files: FileType[], changes: Map<string, string>) => {
   const newFiles = [...files]
   for (const [key, value] of changes.entries()) {
-    const matches = key.match(/(.+)\/(.+):(\d+)/)
+    const matches = key.match(/(.+):(\d+)/)
     if (!matches) continue
-    const category = matches[1]
-    const name = matches[2]
-    const lineNumber = parseInt(matches[3])
+    const path = matches[1]
+    const lineNumber = parseInt(matches[2], 10)
 
-    const fileIndex = newFiles.findIndex((file) => file.category === category && file.name === name)
+    const fileIndex = newFiles.findIndex((file) => file.translatedPath === path)
     if (fileIndex === -1) continue
 
     newFiles[fileIndex].lines[lineNumber].translated = value
@@ -80,7 +67,12 @@ export const EditTranslationView = () => {
     }
   })
 
-  const fileContents = useQuery({
+  const {
+    data: files,
+    isPending,
+    isError,
+    error
+  } = useQuery({
     queryKey: ['files-content', branch],
     queryFn: async () => {
       if (!filesDownloadUrls.data) throw new Error('No files download url found')
@@ -103,34 +95,37 @@ export const EditTranslationView = () => {
 
           const lines = Array.from<{ original: string; translated: string }[]>({
             length: Math.max(splittedOriginal.length, splittedTranslated.length)
-          })
-            .map((_, i) => ({
-              lineNumber: i,
-              original: splittedOriginal[i] ?? '',
-              translated: splittedTranslated[i] ?? ''
-            }))
-            .filter(({ original, translated }) => !isTechnicalString(original) || !isTechnicalString(translated))
+          }).map((_, i) => ({
+            lineNumber: i,
+            original: splittedOriginal[i] ?? '',
+            translated: splittedTranslated[i] ?? ''
+          }))
 
-          const afterChanges = await computeFileContentsAfterChanges([{ ...file, lines }], changedLines)
-
-          return { ...afterChanges[0] }
+          return { ...file, lines }
         })
       )
     },
     enabled: !!filesDownloadUrls.data
   })
 
-  const fileNamesByCategory =
-    filesDownloadUrls.data?.reduce((acc, { name, category }) => {
-      if (!acc[category]) acc[category] = []
-      acc[category].push(name)
-      return acc
-    }, {} as Record<string, string[]>) ?? {}
+  const filesByCategory = useMemo(
+    () =>
+      filesDownloadUrls.data?.reduce((acc, file) => {
+        if (!acc[file.category]) acc[file.category] = []
+        acc[file.category].push({ ...file, path: file.translatedPath })
+        return acc
+      }, {} as Record<string, SidePanelFileType[]>) ?? {},
+    [filesDownloadUrls.data]
+  )
 
   const selectedFileContents = useMemo(
-    () =>
-      fileContents.data?.find((file) => file.name === selectedFile?.name && file.category === selectedFile?.category),
-    [fileContents.data, selectedFile]
+    () => files?.find((file) => file.translatedPath === selectedFile?.path),
+    [files, selectedFile]
+  )
+
+  const filteredLines = useMemo(
+    () => selectedFileContents?.lines.filter((line) => !isTechnicalString(line.original)),
+    [selectedFileContents]
   )
 
   const navigate = useNavigate()
@@ -144,63 +139,41 @@ export const EditTranslationView = () => {
     <div className="flex flex-row">
       <SidePanel
         title="Fichiers de traduction"
-        categories={fileNamesByCategory}
+        categories={filesByCategory}
         onSelected={(selected) => setSelectedFile(selected)}
         selected={selectedFile}
         branch={branch}
+        newFilesAfterChange={() => {
+          const filesThatChanged = files?.filter((file) =>
+            Array.from(changedLines.entries()).find(([key]) => key.startsWith(file.translatedPath))
+          )
+          const withAppliedChanges = computeFileContentsAfterChanges(filesThatChanged ?? [], changedLines)
+          return withAppliedChanges.map((file) => ({
+            path: file.translatedPath,
+            content: file.lines.map((line) => line.translated).join('\n')
+          }))
+        }}
       />
       <div className="flex flex-col items-center w-full px-4">
         <NavLink to={TRANSLATION_APP_PAGES.OVERVIEW}>Retour à l'accueil</NavLink>
         <h1 className="text-3xl font-semibold text-center mb-8">{prName}</h1>
-        {fileContents.isPending && <div>Téléchargement des fichiers...</div>}
-        {fileContents.isError && <div>Erreur lors du téléchargement des fichiers {fileContents.error.message}</div>}
+        {isPending && <div>Téléchargement des fichiers...</div>}
+        {isError && <div>Erreur lors du téléchargement des fichiers {error.message}</div>}
         {selectedFileContents && selectedFile && (
           <div className="w-full h-full pb-4">
-            <AgGridReact
-              theme={myTheme}
-              className="w-full max-w-[1700px] relative h-[calc(100svh-200px)]"
-              rowData={selectedFileContents.lines}
-              rowClassRules={{
-                'ag-cell-changed': ({ data }) =>
-                  !!data && changedLines.has(`${selectedFile?.category}/${selectedFile?.name}:${data.lineNumber}`)
+            <TranslationGrid
+              onLineEdited={({ data, newValue }) => {
+                const key = makeLineKey(selectedFile, data.lineNumber)
+                setChangedLines((prev) => {
+                  if (data.original === newValue) prev.delete(key)
+                  else prev.set(key, newValue)
+                  return new Map(prev)
+                })
               }}
-              columnDefs={[
-                { field: 'lineNumber', headerName: 'N°', width: 80, sortable: false },
-                {
-                  field: 'original',
-                  headerName: 'Version anglaise',
-                  autoHeight: true,
-                  wrapText: true,
-                  flex: 1,
-                  cellClass: 'leading-6!',
-                  sortable: false,
-                  filter: 'agTextColumnFilter',
-                  suppressHeaderFilterButton: true,
-                  floatingFilter: true
-                },
-                {
-                  field: 'translated',
-                  headerName: 'Version française',
-                  autoHeight: true,
-                  wrapText: true,
-                  flex: 1,
-                  editable: true,
-                  sortable: false,
-                  cellEditor: 'agTextCellEditor',
-                  cellClass: 'leading-6!',
-                  onCellValueChanged: async ({ data, newValue }) => {
-                    const key = makeLineKey(selectedFile, data.lineNumber)
-                    setChangedLines((prev) => {
-                      if (data.original === newValue) prev.delete(key)
-                      else prev.set(key, newValue)
-                      return new Map(prev)
-                    })
-                  },
-                  filter: 'agTextColumnFilter',
-                  suppressHeaderFilterButton: true,
-                  floatingFilter: true
-                }
-              ]}
+              linesToShow={filteredLines ?? []}
+              changedLineNumbers={Array.from(changedLines.keys())
+                .filter((c) => c.startsWith(selectedFile.path))
+                .map((key) => parseInt(key.split(':')[1], 10))}
             />
           </div>
         )}

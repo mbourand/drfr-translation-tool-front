@@ -4,19 +4,20 @@ import { SaveChangesModal } from './SaveChangesModal'
 import { SubmitToReviewButton } from './SubmitToReviewButton'
 
 export type SidePanelFileType = {
-  category: string
   name: string
+  path: string
 }
 
 type SidePanelProps = {
   title: string
-  categories: Record<string, string[]>
+  categories: Record<string, SidePanelFileType[]>
   onSelected: (file: SidePanelFileType) => void
   selected: SidePanelFileType | null
   branch: string
+  newFilesAfterChange?: () => { path: string; content: string }[]
 }
 
-export const SidePanel = ({ categories, onSelected, selected, title, branch }: SidePanelProps) => {
+export const SidePanel = ({ categories, onSelected, selected, title, branch, newFilesAfterChange }: SidePanelProps) => {
   const [isSaveModalVisible, setIsSaveModalVisible] = useState(false)
 
   return (
@@ -40,12 +41,12 @@ export const SidePanel = ({ categories, onSelected, selected, title, branch }: S
                 </summary>
                 <ul>
                   {files.map((file) => (
-                    <li key={file}>
+                    <li key={file.path}>
                       <button
-                        className={selected?.name === file && selected?.category === category ? 'menu-active' : ''}
-                        onClick={() => onSelected({ category, name: file })}
+                        className={selected?.path === file.path && selected?.path === category ? 'menu-active' : ''}
+                        onClick={() => onSelected(file)}
                       >
-                        {file}
+                        {file.name}
                       </button>
                     </li>
                   ))}
@@ -62,7 +63,14 @@ export const SidePanel = ({ categories, onSelected, selected, title, branch }: S
           </ul>
         </div>
       </div>
-      <SaveChangesModal isVisible={isSaveModalVisible} onClose={() => setIsSaveModalVisible(false)} />
+      {branch && newFilesAfterChange && (
+        <SaveChangesModal
+          isVisible={isSaveModalVisible}
+          onClose={() => setIsSaveModalVisible(false)}
+          branch={branch}
+          newFilesAfterChange={newFilesAfterChange}
+        />
+      )}
     </>
   )
 }
