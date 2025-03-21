@@ -7,6 +7,7 @@ import { store, STORE_KEYS, StoreUserInfos } from '../../../store/store'
 import { useMemo, useState } from 'react'
 import { SidePanel, FileType } from './SidePanel/SidePanel'
 import { TranslationGrid } from './TanslationGrid'
+import { ArrowLeftIcon } from '../../../components/icons/ArrowLeftIcon'
 
 const makeLineKey = (file: FileType, line: number) => `${file.translatedPath}:${line}`
 
@@ -121,8 +122,12 @@ export const EditTranslationView = () => {
         changes={changedLines}
       />
       <div className="flex flex-col items-center w-full px-4">
-        <NavLink to={TRANSLATION_APP_PAGES.OVERVIEW}>Retour à l'accueil</NavLink>
-        <h1 className="text-3xl font-semibold text-center mb-8">{prName}</h1>
+        <div className="flex flex-row w-full items-center mb-4 pt-2">
+          <NavLink to={TRANSLATION_APP_PAGES.OVERVIEW} className="btn btn-circle btn-ghost">
+            <ArrowLeftIcon />
+          </NavLink>
+          <h1 className="text-3xl font-semibold text-center w-full">{prName}</h1>
+        </div>
         {isPending && <div>Téléchargement des fichiers...</div>}
         {isError && <div>Erreur lors du téléchargement des fichiers {error.message}</div>}
         {selectedFileContents && selectedFile && (

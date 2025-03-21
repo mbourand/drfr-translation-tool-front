@@ -15,7 +15,6 @@ type SidePanelProps = {
   onSelected: (file: FileType) => void
   selected: FileType | null
   branch: string
-  newFilesAfterChange?: () => { path: string; content: string }[]
   changes: Map<string, string>
 }
 
