@@ -4,10 +4,11 @@ import { TRANSLATION_API_URLS } from '../../routes/translation/routes'
 import { store, STORE_KEYS, StoreUserInfos } from '../../store/store'
 import { TranslationList } from './TranslationList'
 import { AddIcon } from '../../components/icons/AddIcon'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { CreateTranslationModal } from './CreateTranslationModal'
 import { TranslationType } from '../../routes/translation/schemas'
 import { TRANSLATION_APP_PAGES } from '../../routes/pages/routes'
+import { useNavigate } from 'react-router'
 
 const TRANSLATION_LABEL = 'Traduction'
 const WIP_LABEL = 'En cours'
@@ -19,8 +20,8 @@ const mapPRToTranslation = (pr: TranslationType, isYours: boolean) => ({
   author: pr.user.login,
   authorAvatar: pr.user.avatar_url,
   href: isYours
-    ? TRANSLATION_APP_PAGES.TRANSLATION.EDIT(pr.id.toString())
-    : TRANSLATION_APP_PAGES.TRANSLATION.REVIEW(pr.id.toString())
+    ? TRANSLATION_APP_PAGES.TRANSLATION.EDIT(pr.head.ref.toString(), pr.title.toString())
+    : TRANSLATION_APP_PAGES.TRANSLATION.REVIEW(pr.head.ref.toString())
 })
 
 const getTranslations = async () => {
@@ -49,6 +50,7 @@ const getTranslations = async () => {
 }
 
 export const OverviewView = () => {
+  const navigate = useNavigate()
   const [isCreateTranslationModalVisible, setIsCreateTranslationModalVisible] = useState(false)
 
   const { data, isError } = useQuery({
@@ -56,6 +58,10 @@ export const OverviewView = () => {
     queryFn: getTranslations,
     refetchOnMount: 'always'
   })
+
+  if (isError) {
+    store.delete(STORE_KEYS.USER_INFOS).then(() => navigate(TRANSLATION_APP_PAGES.HOME))
+  }
 
   const translationLists = useMemo(() => {
     if (!data) return []
@@ -92,7 +98,7 @@ export const OverviewView = () => {
 
   return (
     <>
-      <main className="h-screen mx-auto max-w-[1700px] w-full flex flex-col gap-8 py-8">
+      <main className="h-screen mx-auto max-w-[1700px] w-full flex flex-col gap-8 py-8 px-4">
         <h1 className="text-center text-4xl font-bold">Vue d'ensemble</h1>
         <section className="flex flex-row w-full gap-2 h-full relative">
           {translationLists.map((list) => (

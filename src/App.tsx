@@ -19,7 +19,7 @@ function App() {
           <Route path={TRANSLATION_APP_PAGES.AUTH.LOGIN} element={<AuthLoginView />} />
           <Route path={TRANSLATION_APP_PAGES.AUTH.CONFIRM} element={<AuthConfirmView />} />
           <Route path={TRANSLATION_APP_PAGES.OVERVIEW} element={<OverviewView />} />
-          <Route path={TRANSLATION_APP_PAGES.TRANSLATION.EDIT(':id')} element={<EditTranslationView />}></Route>
+          <Route path={TRANSLATION_APP_PAGES.TRANSLATION.EDIT(':branch')} element={<EditTranslationView />}></Route>
         </Routes>
       </BrowserRouter>
       <div id="modal"></div>

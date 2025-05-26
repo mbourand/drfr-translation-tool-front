@@ -6,7 +6,7 @@ export const STORE_KEYS = {
   USER_INFOS: 'user_infos'
 } as const
 
-export const store = await load('store.json')
+export const store = await load('stor3.json')
 
 export type StoreUserInfos = Pick<z.infer<typeof UserSchema>, 'id' | 'login' | 'avatar_url'> & {
   accessToken: string

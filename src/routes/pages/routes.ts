@@ -5,7 +5,7 @@ export const TRANSLATION_APP_PAGES = {
     CONFIRM: '/auth/confirm'
   },
   TRANSLATION: {
-    EDIT: (number: string) => `/translation/edit/${number}`,
+    EDIT: (branch: string, name?: string) => `/translation/edit/${branch}${name ? `?name=${name}` : ''}`,
     REVIEW: (number: string) => `/translation/review/${number}`
   },
   OVERVIEW: '/overview'

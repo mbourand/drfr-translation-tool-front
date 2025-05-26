@@ -29,6 +29,11 @@ export const TranslationSchema = z
         avatar_url: z.string()
       })
       .passthrough(),
+    head: z
+      .object({
+        ref: z.string()
+      })
+      .passthrough(),
     state: z.string(),
     merged_at: z.string().nullish()
   })
