@@ -2,6 +2,7 @@ import { useMemo } from 'react'
 import { FolderIcon } from '../../../../components/icons/FolderIcon'
 import { SaveChangesButton } from './SaveChangesButton'
 import { SubmitToReviewButton } from './SubmitToReviewButton'
+import { ThemeButton } from '../../../../components/ThemeButton'
 
 export type FileType = {
   name: string
@@ -33,7 +34,11 @@ export const SidePanel = ({ categories, onSelected, selected, title, branch, cha
         <div className="drawer-side">
           <label htmlFor="my-drawer-2" aria-label="close sidebar" className="drawer-overlay"></label>
           <ul className="menu bg-base-200 text-base-content min-h-full w-80 p-4 h-full">
-            <h2 className="text-xl font-semibold mb-2">{title}</h2>
+            <div className="flex flex-row justify-between w-full items-center mb-2">
+              <h2 className="text-xl font-semibold">{title}</h2>
+              <ThemeButton />
+            </div>
+
             {Object.entries(categories).map(([category, files]) => (
               <li key={category}>
                 <summary>

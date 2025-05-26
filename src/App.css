@@ -1,5 +1,7 @@
 @import 'tailwindcss';
-@plugin "daisyui";
+@plugin "daisyui" {
+  themes: all;
+}
 
 body {
   @apply m-0 p-0 w-full h-full relative;
@@ -13,7 +15,7 @@ html {
 .ag-cell-changed::before {
   @apply bg-success/15;
 
-  content: "";
+  content: '';
   position: absolute;
   top: 0;
   left: 0;
