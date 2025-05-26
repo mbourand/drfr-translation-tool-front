@@ -131,7 +131,7 @@ export const EditTranslationView = () => {
         {isPending && <div>Téléchargement des fichiers...</div>}
         {isError && <div>Erreur lors du téléchargement des fichiers {error.message}</div>}
         {selectedFileContents && selectedFile && (
-          <div className="w-full h-full pb-4">
+          <div className="w-full h-full pb-4 flex flex-row justify-center">
             <TranslationGrid
               onLineEdited={({ data, newValue }) => {
                 const key = makeLineKey(selectedFile, data.lineNumber)
