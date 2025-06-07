@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { fetchData } from '../../fetching/fetcher'
+import { fetchData } from '../../modules/fetching/fetcher'
 import { TRANSLATION_API_URLS } from '../../routes/translation/routes'
 import { store, STORE_KEYS, StoreUserInfos } from '../../store/store'
 import { TranslationList } from './TranslationList'

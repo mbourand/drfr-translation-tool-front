@@ -1,15 +1,14 @@
 import { NavLink, useNavigate, useParams, useSearchParams } from 'react-router'
 import { TRANSLATION_APP_PAGES } from '../../../routes/pages/routes'
 import { useQuery } from '@tanstack/react-query'
-import { fetchData } from '../../../fetching/fetcher'
+import { fetchData } from '../../../modules/fetching/fetcher'
 import { TRANSLATION_API_URLS } from '../../../routes/translation/routes'
 import { store, STORE_KEYS, StoreUserInfos } from '../../../store/store'
 import { useMemo, useState } from 'react'
 import { SidePanel, FileType } from './SidePanel/SidePanel'
 import { TranslationGrid } from './TanslationGrid'
 import { ArrowLeftIcon } from '../../../components/icons/ArrowLeftIcon'
-
-const makeLineKey = (file: FileType, line: number) => `${file.translatedPath}:${line}`
+import { makeLineKey } from './changes'
 
 const isTechnicalString = (line: string) =>
   line.trim() === '' ||
