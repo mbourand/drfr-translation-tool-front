@@ -5,7 +5,7 @@ import { TRANSLATION_APP_PAGES } from '../../routes/pages/routes'
 import { useNavigate } from 'react-router'
 import { store, STORE_KEYS, StoreUserInfos } from '../../store/store'
 import { TRANSLATION_API_URLS } from '../../routes/translation/routes'
-import { fetchData } from '../../fetching/fetcher'
+import { fetchData } from '../../modules/fetching/fetcher'
 
 type CreateTranslationModalProps = {
   isVisible: boolean

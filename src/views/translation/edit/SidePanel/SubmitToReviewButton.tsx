@@ -3,7 +3,7 @@ import { Modal } from '../../../../components/Modal'
 import { TRANSLATION_API_URLS } from '../../../../routes/translation/routes'
 import { store, STORE_KEYS, StoreUserInfos } from '../../../../store/store'
 import { useMutation } from '@tanstack/react-query'
-import { fetchData } from '../../../../fetching/fetcher'
+import { fetchData } from '../../../../modules/fetching/fetcher'
 import { useNavigate } from 'react-router'
 import { TRANSLATION_APP_PAGES } from '../../../../routes/pages/routes'
 

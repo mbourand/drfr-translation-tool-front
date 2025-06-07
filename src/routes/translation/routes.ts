@@ -45,7 +45,10 @@ export const TRANSLATION_API_URLS = {
             name: z.string(),
             category: z.string(),
             originalPath: z.string(),
-            translatedPath: z.string()
+            translatedPath: z.string(),
+            pathsInGameFolder: z.object({
+              windows: z.string()
+            })
           })
           .array()
       } as const),

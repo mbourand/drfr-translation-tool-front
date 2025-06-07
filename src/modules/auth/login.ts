@@ -1,6 +1,6 @@
 import { fetchData } from '../fetching/fetcher'
-import { TRANSLATION_API_URLS } from '../routes/translation/routes'
-import { store, STORE_KEYS } from '../store/store'
+import { TRANSLATION_API_URLS } from '../../routes/translation/routes'
+import { store, STORE_KEYS } from '../../store/store'
 
 export const login = async (accessToken: string) => {
   const userInfos = await fetchData({
