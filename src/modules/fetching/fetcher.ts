@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { fetch } from '@tauri-apps/plugin-http'
 
 type HTTPMethod = 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH' | 'OPTIONS' | 'HEAD' | 'CONNECT' | 'TRACE'
 type BodyMethod = 'POST' | 'PUT' | 'PATCH'

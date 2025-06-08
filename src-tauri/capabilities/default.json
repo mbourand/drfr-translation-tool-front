@@ -6,10 +6,9 @@
   "permissions": [
     "core:default",
     "opener:default",
-    "http:default",
     {
-      "identifier": "http:allow-fetch",
-      "allow": ["http://localhost:1420", "http://localhost:3000"]
+      "identifier": "http:default",
+      "allow": [{ "url": "https://deltarune-fr.com/*" }]
     },
     "shell:default",
     "store:default",

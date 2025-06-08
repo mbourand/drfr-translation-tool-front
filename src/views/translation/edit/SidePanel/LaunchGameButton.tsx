@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { LaunchGameModal } from './LaunchGameModal'
-import { patchAndLaunchGame } from '../../../../modules/game/launch'
+import { PatchGameTranslationFile } from '../../../../modules/game/launch'
 
 type LaunchGameButtonProps = {
-  files: Parameters<typeof patchAndLaunchGame>[3]
+  files: PatchGameTranslationFile[]
 }
 
 export const LaunchGameButton = ({ files }: LaunchGameButtonProps) => {

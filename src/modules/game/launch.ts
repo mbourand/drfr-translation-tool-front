@@ -8,12 +8,56 @@ export const ORIGINAL_FILE_EXT = '.original'
 export const PATCHED_FILE_EXT = '.patched'
 const ON_THE_FLY_STRINGS_FILE_NAME = '.current_strings.txt'
 
-export const patchAndLaunchGame = async (
-  gameFolder: string,
-  utmtCliFolder: string,
-  gitFolder: string,
-  files: { pathsInGameFolder: { windows: string }; content: string; pathInGitFolder: string }[]
-) => {
+type SaveFile = {
+  name: string
+  url: string
+}
+
+type ChangeSaveFilesFromNetworkParams = {
+  savesFolder: string
+  savesFiles: SaveFile[]
+}
+
+export type PatchGameTranslationFile = {
+  pathsInGameFolder: { windows: string }
+  content: string
+  pathInGitFolder: string
+}
+
+export const changeSaveFilesFromNetwork = async ({ savesFiles, savesFolder }: ChangeSaveFilesFromNetworkParams) => {
+  const saveFilesPromises = savesFiles.map(async (file) => {
+    const response = await fetch(file.url)
+    if (!response.ok) {
+      throw new Error(`Failed to fetch save file from ${file.url}`)
+    }
+    return { name: file.name, content: await response.text() }
+  })
+  const saveFilesContents = await Promise.all(saveFilesPromises)
+  for (const saveFile of saveFilesContents) {
+    const saveFilePath = await path.join(savesFolder, saveFile.name)
+    await writeTextFile(saveFilePath, saveFile.content)
+  }
+}
+
+type PatchAndLaunchGameParams = {
+  gameFolder: string
+  utmtCliFolder: string
+  gitFolder: string
+  savesFolder: string
+  savesFiles: SaveFile[]
+  files: PatchGameTranslationFile[]
+}
+
+export const patchAndLaunchGame = async ({
+  files,
+  gameFolder,
+  gitFolder,
+  savesFiles,
+  savesFolder,
+  utmtCliFolder
+}: PatchAndLaunchGameParams) => {
+  await changeSaveFilesFromNetwork({ savesFolder, savesFiles })
+
   for (const file of files) {
     const absoluteFilePathInGameFolder = await path.join(gameFolder, file.pathsInGameFolder.windows ?? '')
     const originalFilePathInGameFolder = absoluteFilePathInGameFolder + ORIGINAL_FILE_EXT

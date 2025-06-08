@@ -49,7 +49,7 @@ export const ThemeButton = () => {
         className="dropdown-content bg-base-300 rounded-box z-1 w-52 p-2 shadow-2xl max-h-[min(50vh,_500px)] overflow-auto"
       >
         {THEMES.map((theme) => (
-          <li>
+          <li key={theme.value}>
             <input
               onClick={() => document.querySelector('html')?.setAttribute('data-theme', theme.value)}
               type="radio"
