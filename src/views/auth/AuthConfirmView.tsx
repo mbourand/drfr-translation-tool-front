@@ -3,8 +3,8 @@ import { useNavigate, useSearchParams } from 'react-router'
 import { useEffect, useRef } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { TRANSLATION_API_URLS } from '../../routes/translation/routes'
-import { fetchData } from '../../fetching/fetcher'
-import { login } from '../../auth/login'
+import { fetchData } from '../../modules/fetching/fetcher'
+import { login } from '../../modules/auth/login'
 
 export const AuthConfirmView = () => {
   const navigate = useNavigate()

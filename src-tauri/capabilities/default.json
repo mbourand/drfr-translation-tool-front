@@ -13,6 +13,21 @@
     },
     "shell:default",
     "store:default",
-    "core:webview:allow-set-webview-zoom"
+    "core:webview:allow-set-webview-zoom",
+    "dialog:default",
+    "fs:allow-read-file",
+    "fs:allow-write-file",
+    "fs:allow-write-text-file",
+    "fs:allow-copy-file",
+    "fs:allow-mkdir",
+    "fs:allow-remove",
+    "fs:allow-rename",
+    {
+      "identifier": "fs:scope",
+      "allow": ["**"]
+    },
+    "fs:allow-seek",
+    "fs:allow-read",
+    "fs:allow-exists"
   ]
 }
