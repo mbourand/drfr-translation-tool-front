@@ -29,7 +29,6 @@ export const SidePanel = ({ categories, onSelected, selected, title, branch, cha
 
   const filesForLaunchingGame = useMemo(() => {
     return files.map((file) => {
-      console.log('filesForLaunchingGame', files, changes)
       return {
         pathsInGameFolder: file.pathsInGameFolder,
         content: file.lines
