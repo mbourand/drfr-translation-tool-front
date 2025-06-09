@@ -216,8 +216,8 @@ export const LaunchGameModal = ({ onClose, isVisible, files }: LaunchGameModalPr
               refetchSelectedSaveFiles()
             }}
           >
-            {deltaruneSavesIndex?.map((save) => (
-              <option key={save.name} value={save.name}>
+            {deltaruneSavesIndex?.map((save, i) => (
+              <option key={i} value={save.name}>
                 {save.name}
               </option>
             ))}
