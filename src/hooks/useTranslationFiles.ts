@@ -7,7 +7,7 @@ export const useTranslationFiles = (branch?: string, options?: { atBranchCreatio
   const { atBranchCreation = false } = options ?? {}
 
   const filesDownloadUrls = useQuery({
-    queryKey: ['files', branch],
+    queryKey: ['files', branch, atBranchCreation],
     queryFn: async () => {
       const userInfos = await store.get<StoreUserInfos>(STORE_KEYS.USER_INFOS)
       if (!userInfos) throw new Error('No token found')
@@ -23,7 +23,7 @@ export const useTranslationFiles = (branch?: string, options?: { atBranchCreatio
   })
 
   const translationFiles = useQuery({
-    queryKey: ['files-content', branch],
+    queryKey: ['files-content', branch, atBranchCreation],
     queryFn: async () => {
       if (!filesDownloadUrls.data) throw new Error('No files download url found')
 

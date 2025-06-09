@@ -11,6 +11,7 @@ import { isTechnicalString } from '../../../modules/game/strings'
 import { isCellVisible } from '../isCellVisible'
 import { SidePanel } from './SidePanel'
 import { TranslationStringSearch } from './TranslationStringSearch'
+import { binarySearch } from '../../../utils'
 
 export type ReviewFileType = {
   name: string
@@ -97,7 +98,7 @@ export const ReviewTranslationView = () => {
         acc[file.category].push(file)
         return acc
       }, {} as Record<string, ReviewFileType[]>) ?? {},
-    [branchTranslationFiles]
+    [gridFiles]
   )
 
   const selectedFileContents = useMemo(
@@ -112,7 +113,22 @@ export const ReviewTranslationView = () => {
 
   const changedLines = useMemo(() => {
     if (!filteredLines) return []
-    return filteredLines.filter((line) => line.oldTranslated !== line.newTranslated).map((line) => line.lineNumber)
+    const fileFromMasterAtCreation = translationFilesAtCreation?.find(
+      (f) => f.translatedPath === selectedFileContents?.translatedPath
+    )
+    if (!fileFromMasterAtCreation) return []
+    return filteredLines
+      .filter((line) => {
+        const indexInMasterLines = binarySearch(
+          fileFromMasterAtCreation.lines,
+          (masterLine) => masterLine.lineNumber - line.lineNumber
+        )
+        return (
+          line.oldTranslated !== line.newTranslated &&
+          line.newTranslated !== fileFromMasterAtCreation.lines[indexInMasterLines].translated
+        )
+      })
+      .map((line) => line.lineNumber)
   }, [selectedFileContents])
 
   const linesToShow = useMemo(() => {
@@ -152,10 +168,10 @@ export const ReviewTranslationView = () => {
         )}
         {isPending && <div>Téléchargement des fichiers...</div>}
         {isError && <div>Erreur lors du téléchargement des fichiers {error?.message}</div>}
-        {selectedFileContents && selectedFile && (
+        {filteredLines && selectedFileContents && selectedFile && (
           <div className="w-full h-full pb-4 flex flex-row justify-center">
             <ReviewTranslationGrid
-              filteredLines={filteredLines ?? []}
+              filteredLines={filteredLines}
               linesToShow={linesToShow}
               changedLineNumbers={changedLines}
               onReady={(e) => setGridApi(e.api)}

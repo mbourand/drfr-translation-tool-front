@@ -1,5 +1,4 @@
 import { useMutation } from '@tanstack/react-query'
-import { useRef } from 'react'
 import { store, STORE_KEYS, StoreUserInfos } from '../../../store/store'
 import { fetchData } from '../../../modules/fetching/fetcher'
 import { TRANSLATION_API_URLS } from '../../../routes/translation/routes'
