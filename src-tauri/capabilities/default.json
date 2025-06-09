@@ -6,13 +6,31 @@
   "permissions": [
     "core:default",
     "opener:default",
-    "http:default",
     {
-      "identifier": "http:allow-fetch",
-      "allow": ["http://localhost:1420", "http://localhost:3000"]
+      "identifier": "http:default",
+      "allow": [
+        { "url": "https://deltarune-fr.com/*" },
+        { "url": "http://localhost:3000" },
+        { "url": "http://localhost:1420" }
+      ]
     },
     "shell:default",
     "store:default",
-    "core:webview:allow-set-webview-zoom"
+    "core:webview:allow-set-webview-zoom",
+    "dialog:default",
+    "fs:allow-read-file",
+    "fs:allow-write-file",
+    "fs:allow-write-text-file",
+    "fs:allow-copy-file",
+    "fs:allow-mkdir",
+    "fs:allow-remove",
+    "fs:allow-rename",
+    {
+      "identifier": "fs:scope",
+      "allow": ["**"]
+    },
+    "fs:allow-seek",
+    "fs:allow-read",
+    "fs:allow-exists"
   ]
 }

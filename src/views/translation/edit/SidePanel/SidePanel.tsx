@@ -3,11 +3,16 @@ import { FolderIcon } from '../../../../components/icons/FolderIcon'
 import { SaveChangesButton } from './SaveChangesButton'
 import { SubmitToReviewButton } from './SubmitToReviewButton'
 import { ThemeButton } from '../../../../components/ThemeButton'
+import { LaunchGameButton } from './LaunchGameButton'
+import { makeLineKey } from '../changes'
 
 export type FileType = {
   name: string
   translatedPath: string
   lines: { lineNumber: number; original: string; translated: string }[]
+  pathsInGameFolder: {
+    windows: string
+  }
 }
 
 type SidePanelProps = {
@@ -21,6 +26,18 @@ type SidePanelProps = {
 
 export const SidePanel = ({ categories, onSelected, selected, title, branch, changes }: SidePanelProps) => {
   const files = useMemo(() => Object.values(categories).flat(), [categories])
+
+  const filesForLaunchingGame = useMemo(() => {
+    return files.map((file) => {
+      return {
+        pathsInGameFolder: file.pathsInGameFolder,
+        content: file.lines
+          .map((line) => changes.get(makeLineKey(file, line.lineNumber)) ?? line.translated)
+          .join('\n'),
+        pathInGitFolder: file.translatedPath
+      }
+    })
+  }, [files, changes])
 
   return (
     <>
@@ -64,7 +81,7 @@ export const SidePanel = ({ categories, onSelected, selected, title, branch, cha
               </li>
             ))}
             <div className="mt-auto flex flex-col gap-3">
-              <button className="btn btn-soft btn-primary">Lancer le jeu</button>
+              <LaunchGameButton files={filesForLaunchingGame} />
               <SubmitToReviewButton branch={branch} />
               <SaveChangesButton branch={branch} changes={changes} files={files} />
             </div>
