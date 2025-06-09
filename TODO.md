@@ -9,7 +9,7 @@
 
 ### Utils
 
-- Mettre en place un système de control f custom
+- Un bouton déconnexion
 
 ### Interface de traduction
 
