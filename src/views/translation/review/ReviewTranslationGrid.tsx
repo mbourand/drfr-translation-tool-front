@@ -1,15 +1,14 @@
 import { AgGridReact } from 'ag-grid-react'
-import { GridReadyEvent, ICellRendererParams, NewValueParams } from 'ag-grid-community'
-import { myTheme } from './grid-theme'
-import { LineType, MatchLanguages } from './types'
+import { GridReadyEvent, ICellRendererParams } from 'ag-grid-community'
 import { StringSearchResult } from '../../../components/StringSearch/types'
 import { getParts } from '../../../string-search/get-parts'
+import { MatchLanguages, ReviewLineType } from '../edit/types'
+import { myTheme } from '../edit/grid-theme'
 
 type TranslationGridProps = {
-  linesToShow: LineType[]
+  linesToShow: ReviewLineType[]
   changedLineNumbers: number[]
-  onLineEdited: (event: NewValueParams<LineType, any>) => void
-  onReady?: (event: GridReadyEvent<LineType>) => void
+  onReady?: (event: GridReadyEvent<ReviewLineType>) => void
   translatedStringSearchResult: StringSearchResult | null
   matchLanguage: MatchLanguages
 }
@@ -17,7 +16,6 @@ type TranslationGridProps = {
 export const TranslationGrid = ({
   linesToShow,
   changedLineNumbers,
-  onLineEdited,
   onReady,
   translatedStringSearchResult,
   matchLanguage
@@ -83,16 +81,22 @@ export const TranslationGrid = ({
           cellRenderer: matchLanguage === 'en' ? customCellRenderer : undefined
         },
         {
-          field: 'translated',
-          headerName: 'Version française',
+          field: 'oldTranslated',
+          headerName: 'Version française précédente',
           autoHeight: true,
           wrapText: true,
           flex: 1,
-          editable: true,
           sortable: false,
-          cellEditor: 'agTextCellEditor',
+          cellClass: 'leading-6!'
+        },
+        {
+          field: 'newTranslated',
+          headerName: 'Nouvelle version française',
+          autoHeight: true,
+          wrapText: true,
+          flex: 1,
+          sortable: false,
           cellClass: 'leading-6!',
-          onCellValueChanged: onLineEdited,
           cellRenderer: matchLanguage === 'fr' ? customCellRenderer : undefined
         }
       ]}

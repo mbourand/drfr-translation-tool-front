@@ -4,7 +4,7 @@ import { TRANSLATION_API_URLS } from '../../routes/translation/routes'
 import { store, STORE_KEYS, StoreUserInfos } from '../../store/store'
 import { TranslationList } from './TranslationList'
 import { AddIcon } from '../../components/icons/AddIcon'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { CreateTranslationModal } from './CreateTranslationModal'
 import { TranslationType } from '../../routes/translation/schemas'
 import { TRANSLATION_APP_PAGES } from '../../routes/pages/routes'
@@ -21,7 +21,7 @@ const mapPRToTranslation = (pr: TranslationType, isYours: boolean) => ({
   authorAvatar: pr.user.avatar_url,
   href: isYours
     ? TRANSLATION_APP_PAGES.TRANSLATION.EDIT(pr.head.ref.toString(), pr.title.toString())
-    : TRANSLATION_APP_PAGES.TRANSLATION.REVIEW(pr.head.ref.toString())
+    : TRANSLATION_APP_PAGES.TRANSLATION.REVIEW(pr.head.ref.toString(), pr.title.toString())
 })
 
 const getTranslations = async () => {

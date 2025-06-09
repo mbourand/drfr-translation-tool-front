@@ -52,6 +52,24 @@ export const TRANSLATION_API_URLS = {
           })
           .array()
       } as const),
+    FILES_AT_BRANCH_CREATION: (branch: string) =>
+      ({
+        url: `${ENV.TRANSLATION_API_BASE_URL}/translation/files-at-branch-creation?branch=${branch}`,
+        method: 'GET',
+        responseSchema: z
+          .object({
+            original: z.string(),
+            translated: z.string(),
+            name: z.string(),
+            category: z.string(),
+            originalPath: z.string(),
+            translatedPath: z.string(),
+            pathsInGameFolder: z.object({
+              windows: z.string()
+            })
+          })
+          .array()
+      } as const),
     SAVE_FILES: {
       url: `${ENV.TRANSLATION_API_BASE_URL}/translation/files`,
       method: 'POST',
@@ -66,6 +84,12 @@ export const TRANSLATION_API_URLS = {
           })
         )
       })
+    },
+    APPROVE: {
+      url: `${ENV.TRANSLATION_API_BASE_URL}/translation/approve`,
+      method: 'POST',
+      bodySchema: z.object({ branch: z.string() }),
+      responseSchema: z.object({ success: z.boolean() })
     }
   }
 } as const

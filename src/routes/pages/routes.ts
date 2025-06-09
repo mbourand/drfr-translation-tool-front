@@ -6,7 +6,7 @@ export const TRANSLATION_APP_PAGES = {
   },
   TRANSLATION: {
     EDIT: (branch: string, name?: string) => `/translation/edit/${branch}${name ? `?name=${name}` : ''}`,
-    REVIEW: (number: string) => `/translation/review/${number}`
+    REVIEW: (number: string, name?: string) => `/translation/review/${number}${name ? `?name=${name}` : ''}`
   },
   OVERVIEW: '/overview',
   PATCH_FILES: '/translation-tool/scripts.zip'
