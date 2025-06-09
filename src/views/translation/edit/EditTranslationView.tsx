@@ -8,6 +8,10 @@ import { useMemo, useState } from 'react'
 import { SidePanel, FileType } from './SidePanel/SidePanel'
 import { TranslationGrid } from './TanslationGrid'
 import { ArrowLeftIcon } from '../../../components/icons/ArrowLeftIcon'
+import { GridApi } from 'ag-grid-community'
+import { LineType, MatchLanguages } from './types'
+import { StringSearchResult } from '../../../components/StringSearch/types'
+import { TranslationStringSearch } from './TranslationStringSearch'
 
 const makeLineKey = (file: FileType, line: number) => `${file.translatedPath}:${line}`
 
@@ -28,6 +32,11 @@ export const EditTranslationView = () => {
   const [selectedFile, setSelectedFile] = useState<FileType | null>(null)
 
   const [changedLines, setChangedLines] = useState(new Map<string, string>())
+
+  const [gridApi, setGridApi] = useState<GridApi<LineType> | null>(null)
+
+  const [stringSearchResult, setStringSearchResult] = useState<StringSearchResult | null>(null)
+  const [matchLanguage, setMatchLanguage] = useState<MatchLanguages>('fr')
 
   const filesDownloadUrls = useQuery({
     queryKey: ['files', branch],
@@ -111,6 +120,42 @@ export const EditTranslationView = () => {
     return null
   }
 
+  function getFirstAndLastVisibleRowsIndexes(): { firstVisibleRowIndex: number; lastVisibleRowIndex: number } | null {
+    const rows = document.querySelectorAll<HTMLElement>('.ag-center-cols-container .ag-row')
+    const body = document.querySelector('.ag-body')
+
+    if (!rows || !body) return null
+
+    const bodyTop = body.getBoundingClientRect().top
+    const bodyBottom = bodyTop + body.clientHeight
+
+    let firstVisibleRowIndex = -1
+    let lastVisibleRowIndex = -1
+
+    const sortedRows = Array.from(rows).sort((a, b) => {
+      const indexA = parseInt(a.getAttribute('row-index') || '0')
+      const indexB = parseInt(b.getAttribute('row-index') || '0')
+      return indexA - indexB
+    })
+
+    sortedRows.forEach((row) => {
+      const rowAbsolutePos = row.getBoundingClientRect().top
+      const rowIndex = row.getAttribute('row-index')
+      if (rowAbsolutePos >= bodyTop && firstVisibleRowIndex === -1 && rowIndex)
+        firstVisibleRowIndex = parseInt(rowIndex)
+      if (rowAbsolutePos + row.clientHeight * 2 > bodyBottom && lastVisibleRowIndex === -1 && rowIndex)
+        lastVisibleRowIndex = parseInt(rowIndex)
+    })
+
+    return { firstVisibleRowIndex, lastVisibleRowIndex }
+  }
+
+  const isCellVisible = (rowIndex: number): boolean => {
+    const indexes = getFirstAndLastVisibleRowsIndexes()
+    if (!indexes) return false
+    return rowIndex >= indexes.firstVisibleRowIndex && rowIndex <= indexes.lastVisibleRowIndex
+  }
+
   return (
     <div className="flex flex-row">
       <SidePanel
@@ -128,6 +173,20 @@ export const EditTranslationView = () => {
           </NavLink>
           <h1 className="text-3xl font-semibold text-center w-full">{prName}</h1>
         </div>
+        {filteredLines && (
+          <TranslationStringSearch
+            filteredLines={filteredLines}
+            matchLanguage={matchLanguage}
+            onMatchChanged={(result) => {
+              setStringSearchResult(result)
+              if (!result || !result.selectedMatch || !gridApi) return
+              const rowIndex = result.selectedMatch.rowIndex
+              if (!isCellVisible(rowIndex)) gridApi.ensureIndexVisible(rowIndex, 'middle')
+              gridApi.refreshCells({ force: true })
+            }}
+            onMatchLanguageChanged={setMatchLanguage}
+          />
+        )}
         {isPending && <div>Téléchargement des fichiers...</div>}
         {isError && <div>Erreur lors du téléchargement des fichiers {error.message}</div>}
         {selectedFileContents && selectedFile && (
@@ -145,6 +204,9 @@ export const EditTranslationView = () => {
               changedLineNumbers={Array.from(changedLines.keys())
                 .filter((c) => c.startsWith(selectedFile.translatedPath))
                 .map((key) => parseInt(key.split(':')[1], 10))}
+              onReady={(e) => setGridApi(e.api)}
+              translatedStringSearchResult={stringSearchResult}
+              matchLanguage={matchLanguage}
             />
           </div>
         )}
