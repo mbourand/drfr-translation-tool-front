@@ -21,7 +21,6 @@ type SidePanelProps = {
 }
 
 export const SidePanel = ({ categories, onSelected, selected, title, branch }: SidePanelProps) => {
-  console.log(categories)
   return (
     <>
       <div className="drawer lg:drawer-open w-fit z-30">

@@ -32,7 +32,7 @@ export const SidePanel = ({ categories, onSelected, selected, title, branch, cha
       return {
         pathsInGameFolder: file.pathsInGameFolder,
         content: file.lines
-          .map((line) => changes.get(makeLineKey(file, line.lineNumber)) ?? line.translated)
+          .map((line) => changes.get(makeLineKey(file.translatedPath, line.lineNumber)) ?? line.translated)
           .join('\n'),
         pathInGitFolder: file.translatedPath
       }

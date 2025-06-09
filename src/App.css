@@ -12,13 +12,31 @@ html {
 }
 
 /* Light green-ish background */
-.ag-cell-changed::before {
-  @apply bg-success/15;
 
+.ag-cell-changed::before,
+.ag-bottom-border::before,
+.ag-top-border::before,
+.ag-x-border::before {
   content: '';
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
+}
+
+.ag-cell-changed::before {
+  @apply bg-success/15;
+}
+
+.ag-top-border::before {
+  @apply border-t-2 border-base-content/70 rounded-t-md;
+}
+
+.ag-bottom-border::before {
+  @apply border-b-2 border-base-content/70 rounded-b-md;
+}
+
+.ag-x-border::before {
+  @apply border-x-2 border-base-content/70;
 }

@@ -1,6 +1,6 @@
 import { NavLink, useParams, useSearchParams } from 'react-router'
 import { useTranslationFiles } from '../../../hooks/useTranslationFiles'
-import { TranslationGrid } from './ReviewTranslationGrid'
+import { ReviewTranslationGrid } from './ReviewTranslationGrid'
 import { ArrowLeftIcon } from '../../../components/icons/ArrowLeftIcon'
 import { TRANSLATION_APP_PAGES } from '../../../routes/pages/routes'
 import { StringSearchResult } from '../../../components/StringSearch/types'
@@ -65,7 +65,6 @@ export const ReviewTranslationView = () => {
   const [selectedFile, setSelectedFile] = useState<ReviewFileType | null>(null)
 
   const gridFiles = useMemo(() => {
-    console.log('branchTranslationFiles', branchTranslationFiles)
     if (!branchTranslationFiles || !translationFilesAtCreation || !masterTranslationFiles) return undefined
 
     const result: ReviewFileType[] = []
@@ -76,13 +75,15 @@ export const ReviewTranslationView = () => {
 
       result.push({
         ...branchFile,
-        lines: branchFile.lines.map((line, j) => ({
-          category: branchFile.category,
-          lineNumber: line.lineNumber,
-          original: line.original,
-          oldTranslated: masterFile.lines[j].translated,
-          newTranslated: line.translated
-        }))
+        lines: branchFile.lines.map((line, j) => {
+          return {
+            category: branchFile.category,
+            lineNumber: line.lineNumber,
+            original: line.original,
+            oldTranslated: masterFile.lines[j].translated,
+            newTranslated: line.translated
+          }
+        })
       })
     }
 
@@ -108,6 +109,16 @@ export const ReviewTranslationView = () => {
     () => selectedFileContents?.lines.filter((line) => !isTechnicalString(line.original)),
     [selectedFileContents]
   )
+
+  const changedLines = useMemo(() => {
+    if (!filteredLines) return []
+    return filteredLines.filter((line) => line.oldTranslated !== line.newTranslated).map((line) => line.lineNumber)
+  }, [selectedFileContents])
+
+  const linesToShow = useMemo(() => {
+    if (!selectedFileContents || !changedLines || changedLines.length === 0) return []
+    return changedLines.map((lineNumber) => selectedFileContents.lines[lineNumber]).filter((line) => line !== undefined)
+  }, [changedLines, selectedFileContents])
 
   return (
     <div className="flex flex-row">
@@ -143,13 +154,10 @@ export const ReviewTranslationView = () => {
         {isError && <div>Erreur lors du téléchargement des fichiers {error?.message}</div>}
         {selectedFileContents && selectedFile && (
           <div className="w-full h-full pb-4 flex flex-row justify-center">
-            <TranslationGrid
-              linesToShow={filteredLines ?? []}
-              changedLineNumbers={
-                [] /*Array.from(changedLines.keys())
-                .filter((c) => c.startsWith(selectedFile.translatedPath))
-                .map((key) => parseInt(key.split(':')[1], 10))*/
-              }
+            <ReviewTranslationGrid
+              filteredLines={filteredLines ?? []}
+              linesToShow={linesToShow}
+              changedLineNumbers={changedLines}
               onReady={(e) => setGridApi(e.api)}
               translatedStringSearchResult={stringSearchResult}
               matchLanguage={matchLanguage}

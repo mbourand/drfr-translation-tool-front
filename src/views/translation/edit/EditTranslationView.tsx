@@ -94,7 +94,7 @@ export const EditTranslationView = () => {
           <div className="w-full h-full pb-4 flex flex-row justify-center">
             <TranslationGrid
               onLineEdited={({ data, newValue }) => {
-                const key = makeLineKey(selectedFile, data.lineNumber)
+                const key = makeLineKey(selectedFile.translatedPath, data.lineNumber)
                 setChangedLines((prev) => {
                   if (data.original === newValue) prev.delete(key)
                   else prev.set(key, newValue)
