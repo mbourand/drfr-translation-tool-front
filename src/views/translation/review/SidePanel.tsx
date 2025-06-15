@@ -1,10 +1,7 @@
-import { useMemo } from 'react'
-import { FolderIcon } from '../../../../components/icons/FolderIcon'
-import { SaveChangesButton } from './SaveChangesButton'
-import { SubmitToReviewButton } from './SubmitToReviewButton'
-import { ThemeButton } from '../../../../components/ThemeButton'
-import { LaunchGameButton } from './LaunchGameButton'
-import { makeLineKey } from '../changes'
+import { ThemeButton } from '../../../components/ThemeButton'
+import { FolderIcon } from '../../../components/icons/FolderIcon'
+import { ApproveButtonButton } from './ApproveButton'
+import { ReviewFileType } from './ReviewTranslationView'
 
 export type FileType = {
   name: string
@@ -17,28 +14,13 @@ export type FileType = {
 
 type SidePanelProps = {
   title: string
-  categories: Record<string, FileType[]>
-  onSelected: (file: FileType) => void
-  selected: FileType | null
+  categories: Record<string, ReviewFileType[]>
+  onSelected: (file: ReviewFileType) => void
+  selected: ReviewFileType | null
   branch: string
-  changes: Map<string, string>
 }
 
-export const SidePanel = ({ categories, onSelected, selected, title, branch, changes }: SidePanelProps) => {
-  const files = useMemo(() => Object.values(categories).flat(), [categories])
-
-  const filesForLaunchingGame = useMemo(() => {
-    return files.map((file) => {
-      return {
-        pathsInGameFolder: file.pathsInGameFolder,
-        content: file.lines
-          .map((line) => changes.get(makeLineKey(file.translatedPath, line.lineNumber)) ?? line.translated)
-          .join('\n'),
-        pathInGitFolder: file.translatedPath
-      }
-    })
-  }, [files, changes])
-
+export const SidePanel = ({ categories, onSelected, selected, title, branch }: SidePanelProps) => {
   return (
     <>
       <div className="drawer lg:drawer-open w-fit z-30">
@@ -81,9 +63,7 @@ export const SidePanel = ({ categories, onSelected, selected, title, branch, cha
               </li>
             ))}
             <div className="mt-auto flex flex-col gap-3">
-              <LaunchGameButton files={filesForLaunchingGame} />
-              <SubmitToReviewButton branch={branch} />
-              <SaveChangesButton branch={branch} changes={changes} files={files} />
+              <ApproveButtonButton branch={branch} />
             </div>
           </ul>
         </div>

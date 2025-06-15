@@ -49,7 +49,7 @@ export const TranslationGrid = ({
           const part = cellText.slice(start, end)
           if (isMatch) {
             return (
-              <span key={i} style={{ backgroundColor: getMatchColor(rowIndex, start) }}>
+              <span key={i} style={{ backgroundColor: getMatchColor(rowIndex, start), color: 'black' }}>
                 {part}
               </span>
             )

@@ -1,28 +1,17 @@
 import { NavLink, useNavigate, useParams, useSearchParams } from 'react-router'
 import { TRANSLATION_APP_PAGES } from '../../../routes/pages/routes'
-import { useQuery } from '@tanstack/react-query'
-import { fetchData } from '../../../modules/fetching/fetcher'
-import { TRANSLATION_API_URLS } from '../../../routes/translation/routes'
-import { store, STORE_KEYS, StoreUserInfos } from '../../../store/store'
 import { useMemo, useState } from 'react'
 import { SidePanel, FileType } from './SidePanel/SidePanel'
-import { TranslationGrid } from './TanslationGrid'
+import { TranslationGrid } from './TranslationGrid'
 import { ArrowLeftIcon } from '../../../components/icons/ArrowLeftIcon'
 import { GridApi } from 'ag-grid-community'
 import { LineType, MatchLanguages } from './types'
 import { StringSearchResult } from '../../../components/StringSearch/types'
 import { TranslationStringSearch } from './TranslationStringSearch'
 import { makeLineKey } from './changes'
-
-const isTechnicalString = (line: string) =>
-  line.trim() === '' ||
-  line.startsWith('obj_') ||
-  line.startsWith('scr_') ||
-  line.startsWith('gml_') ||
-  line.startsWith('DEVICE_') ||
-  /^[a-z]+$/.test(line) ||
-  /^[A-Za-z]*_[a-zA-Z0-9_]*$/.test(line) ||
-  /^[a-z]+[A-Z0-9][a-zA-Z0-9]*$/.test(line)
+import { isTechnicalString } from '../../../modules/game/strings'
+import { useTranslationFiles } from '../../../hooks/useTranslationFiles'
+import { isCellVisible } from '../isCellVisible'
 
 export const EditTranslationView = () => {
   const branch = useParams().branch
@@ -37,60 +26,9 @@ export const EditTranslationView = () => {
   const [stringSearchResult, setStringSearchResult] = useState<StringSearchResult | null>(null)
   const [matchLanguage, setMatchLanguage] = useState<MatchLanguages>('fr')
 
-  const filesDownloadUrls = useQuery({
-    queryKey: ['files', branch],
-    queryFn: async () => {
-      const userInfos = await store.get<StoreUserInfos>(STORE_KEYS.USER_INFOS)
-      if (!userInfos) throw new Error('No token found')
-      if (!branch) throw new Error('No branch provided')
-
-      return await fetchData({
-        route: TRANSLATION_API_URLS.TRANSLATIONS.FILES(branch),
-        headers: { Authorization: `Bearer ${userInfos.accessToken}` }
-      })
-    }
-  })
-
   const {
-    data: files,
-    isPending,
-    isError,
-    error
-  } = useQuery({
-    queryKey: ['files-content', branch],
-    queryFn: async () => {
-      if (!filesDownloadUrls.data) throw new Error('No files download url found')
-
-      return await Promise.all(
-        filesDownloadUrls.data.map(async (file) => {
-          const userInfos = await store.get<StoreUserInfos>(STORE_KEYS.USER_INFOS)
-          if (!userInfos) throw new Error('No token found')
-
-          const originalResponse = await fetch(file.original)
-          if (!originalResponse.ok) throw new Error('Could not fetch original file')
-          const original = await originalResponse.text()
-
-          const translatedResponse = await fetch(file.translated)
-          if (!translatedResponse.ok) throw new Error('Could not fetch translated file')
-          const translated = await translatedResponse.text()
-
-          const splittedOriginal = original.split('\n')
-          const splittedTranslated = translated.split('\n')
-
-          const lines = Array.from<{ original: string; translated: string }[]>({
-            length: Math.max(splittedOriginal.length, splittedTranslated.length)
-          }).map((_, i) => ({
-            lineNumber: i,
-            original: splittedOriginal[i] ?? '',
-            translated: splittedTranslated[i] ?? ''
-          }))
-
-          return { ...file, lines }
-        })
-      )
-    },
-    enabled: !!filesDownloadUrls.data
-  })
+    translationFiles: { data: files, isPending, isError, error }
+  } = useTranslationFiles(branch)
 
   const filesByCategory = useMemo(
     () =>
@@ -119,42 +57,6 @@ export const EditTranslationView = () => {
     return null
   }
 
-  function getFirstAndLastVisibleRowsIndexes(): { firstVisibleRowIndex: number; lastVisibleRowIndex: number } | null {
-    const rows = document.querySelectorAll<HTMLElement>('.ag-center-cols-container .ag-row')
-    const body = document.querySelector('.ag-body')
-
-    if (!rows || !body) return null
-
-    const bodyTop = body.getBoundingClientRect().top
-    const bodyBottom = bodyTop + body.clientHeight
-
-    let firstVisibleRowIndex = -1
-    let lastVisibleRowIndex = -1
-
-    const sortedRows = Array.from(rows).sort((a, b) => {
-      const indexA = parseInt(a.getAttribute('row-index') || '0')
-      const indexB = parseInt(b.getAttribute('row-index') || '0')
-      return indexA - indexB
-    })
-
-    sortedRows.forEach((row) => {
-      const rowAbsolutePos = row.getBoundingClientRect().top
-      const rowIndex = row.getAttribute('row-index')
-      if (rowAbsolutePos >= bodyTop && firstVisibleRowIndex === -1 && rowIndex)
-        firstVisibleRowIndex = parseInt(rowIndex)
-      if (rowAbsolutePos + row.clientHeight * 2 > bodyBottom && lastVisibleRowIndex === -1 && rowIndex)
-        lastVisibleRowIndex = parseInt(rowIndex)
-    })
-
-    return { firstVisibleRowIndex, lastVisibleRowIndex }
-  }
-
-  const isCellVisible = (rowIndex: number): boolean => {
-    const indexes = getFirstAndLastVisibleRowsIndexes()
-    if (!indexes) return false
-    return rowIndex >= indexes.firstVisibleRowIndex && rowIndex <= indexes.lastVisibleRowIndex
-  }
-
   return (
     <div className="flex flex-row">
       <SidePanel
@@ -170,7 +72,7 @@ export const EditTranslationView = () => {
           <NavLink to={TRANSLATION_APP_PAGES.OVERVIEW} className="btn btn-circle btn-ghost">
             <ArrowLeftIcon />
           </NavLink>
-          <h1 className="text-3xl font-semibold text-center w-full">{prName}</h1>
+          <h1 className="text-3xl font-semibold text-center w-full">Traduction de : {prName}</h1>
         </div>
         {filteredLines && (
           <TranslationStringSearch
@@ -192,7 +94,7 @@ export const EditTranslationView = () => {
           <div className="w-full h-full pb-4 flex flex-row justify-center">
             <TranslationGrid
               onLineEdited={({ data, newValue }) => {
-                const key = makeLineKey(selectedFile, data.lineNumber)
+                const key = makeLineKey(selectedFile.translatedPath, data.lineNumber)
                 setChangedLines((prev) => {
                   if (data.original === newValue) prev.delete(key)
                   else prev.set(key, newValue)
