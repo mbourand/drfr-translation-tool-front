@@ -1,14 +1,12 @@
 import { AgGridReact } from 'ag-grid-react'
-import { GridReadyEvent, ICellRendererParams } from 'ag-grid-community'
+import { GridApi, GridReadyEvent, ICellRendererParams } from 'ag-grid-community'
 import { StringSearchResult } from '../../../components/StringSearch/types'
-import { getParts } from '../../../string-search/get-parts'
 import { MatchLanguages, ReviewLineType } from '../edit/types'
 import { myTheme } from '../edit/grid-theme'
-import { useRef, useState } from 'react'
-import { ArrowUpIcon } from '../../../components/icons/ArrowUpIcon'
-import { ArrowDownIcon } from '../../../components/icons/ArrowDownIcon'
-import { binarySearch } from '../../../utils'
+import { useEffect, useRef, useState } from 'react'
 import { twMerge } from 'tailwind-merge'
+import { UnfoldMoreIcon } from '../../../components/icons/UnfoldMoreIcon'
+import { UnfoldLessIcon } from '../../../components/icons/UnfoldLessIcon'
 
 type TranslationGridProps = {
   filteredLines: ReviewLineType[]
@@ -19,19 +17,40 @@ type TranslationGridProps = {
   linesToShow: ReviewLineType[]
 }
 
-type TranslationContext = {
-  upperContext: string[]
-  bottomContext: string[]
-}
+export const ReviewTranslationGrid = ({ filteredLines, changedLineNumbers, onReady }: TranslationGridProps) => {
+  const gridApi = useRef<GridApi | null>(null)
+  const [selectedChangedLine, setSelectedChangedLine] = useState<ReviewLineType | null>(null)
+  const lineToFocus = useRef<ReviewLineType | null>(null)
 
-export const ReviewTranslationGrid = ({
-  filteredLines,
-  changedLineNumbers,
-  onReady,
-  translatedStringSearchResult,
-  matchLanguage
-}: TranslationGridProps) => {
-  const [contextMap, setContextMap] = useState<Map<number, TranslationContext>>(new Map<number, TranslationContext>())
+  const [pinnedPosition, setPinnedPosition] = useState<'Top' | 'Bottom' | 'None'>('None')
+
+  useEffect(() => {
+    if (!gridApi.current || !lineToFocus.current) return
+    const rowNode = gridApi.current.getRowNode(lineToFocus.current.lineNumber.toString())
+    if (rowNode?.rowIndex == null) return
+    gridApi.current.ensureIndexVisible(rowNode.rowIndex, 'middle')
+    lineToFocus.current = null
+  }, [selectedChangedLine?.lineNumber])
+
+  const checkRowVisibility = (api: GridApi) => {
+    if (selectedChangedLine == null) return
+    const rowNode = api.getRowNode(selectedChangedLine.lineNumber.toString())
+    if (!rowNode) return
+
+    const rowTop = rowNode.rowTop
+    const scrollTop = api.getVerticalPixelRange().top
+    const scrollBottom = api.getVerticalPixelRange().bottom
+    const rowHeight = rowNode.rowHeight
+
+    if (rowTop == null || rowHeight == null) return
+
+    const isTooHigh = scrollTop > rowTop + rowHeight
+    const isTooLow = scrollBottom < rowTop
+
+    if (isTooHigh) setPinnedPosition('Top')
+    else if (isTooLow) setPinnedPosition('Bottom')
+    else setPinnedPosition('None')
+  }
 
   const initLineNumbersToShow = () => {
     // The boolean value is true if the line has been changed in the PR
@@ -42,94 +61,34 @@ export const ReviewTranslationGrid = ({
 
   const lineNumbersToShow = useRef(initLineNumbersToShow())
 
-  const addUpperContext = (rowIndex: number) => {
-    const map = new Map(contextMap)
-
-    if (!map.has(rowIndex)) map.set(rowIndex, { upperContext: [], bottomContext: [] })
-
-    const translationContext = map.get(rowIndex)
-    if (translationContext == undefined) return
-
-    const currentUpperIndex = rowIndex - translationContext.upperContext.length
-
-    translationContext.upperContext = filteredLines
-      .slice(currentUpperIndex - 5, currentUpperIndex)
-      .map((a) => a.newTranslated)
-      .concat(translationContext.upperContext)
-
-    for (let i = currentUpperIndex - 5; i < currentUpperIndex; i++) {
-      if (!lineNumbersToShow.current.has(filteredLines[i].lineNumber)) {
-        lineNumbersToShow.current.set(filteredLines[i].lineNumber, false)
-      }
-    }
-
-    setContextMap(map)
-  }
-
-  const addBottomContext = (rowIndex: number) => {
-    const map = new Map(contextMap)
-
-    if (!map.has(rowIndex)) map.set(rowIndex, { upperContext: [], bottomContext: [] })
-
-    const translationContext = map.get(rowIndex)
-    if (translationContext == undefined) return
-
-    const currentBottomIndex = rowIndex + 1 + translationContext.bottomContext.length
-
-    translationContext.bottomContext = translationContext.bottomContext.concat(
-      filteredLines.map((a) => a.newTranslated).slice(currentBottomIndex, currentBottomIndex + 5)
-    )
-
-    for (let i = currentBottomIndex; i < currentBottomIndex + 5; i++) {
-      if (!lineNumbersToShow.current.has(filteredLines[i].lineNumber)) {
-        lineNumbersToShow.current.set(filteredLines[i].lineNumber, false)
-      }
-    }
-
-    setContextMap(map)
-  }
-
   const customCellRenderer = (params: ICellRendererParams) => {
     const cellText: string = params.value
 
-    if (params.node.rowIndex == null) return cellText
-
-    const indexInFilteredLines = binarySearch(filteredLines, (current) => current.lineNumber - params.data.lineNumber)
-
-    const rowMatches = translatedStringSearchResult?.matches.get(indexInFilteredLines)
-
-    const pattern = translatedStringSearchResult?.pattern
-    const parts = rowMatches && pattern ? getParts(rowMatches, pattern.length, cellText.length) : undefined
-
-    const getMatchColor = (rowIndex: number, charIndex: number) => {
-      return translatedStringSearchResult?.selectedMatch?.rowIndex == rowIndex &&
-        translatedStringSearchResult.selectedMatch?.charIndex == charIndex
-        ? 'orange'
-        : 'yellow'
-    }
+    if (params.node.rowIndex == null || !params.data || params.colDef?.field !== 'newTranslated') return cellText
 
     return (
       <div className={twMerge('flex items-center justify-between w-full')}>
-        <p className="block h-full leading-6">
-          {parts?.map(({ start, end, isMatch }, i) => {
-            const part = cellText.slice(start, end)
-            if (isMatch) {
-              return (
-                <span key={i} style={{ backgroundColor: getMatchColor(indexInFilteredLines, start), color: 'black' }}>
-                  {part}
-                </span>
-              )
-            }
-            return <span key={i}>{part}</span>
-          }) ?? cellText}
-        </p>
+        <p className="block h-full leading-6">{cellText}</p>
         {lineNumbersToShow.current.get(params.data.lineNumber) === true && (
           <div className="flex gap-2 h-full items-center">
-            <button className="btn btn-square btn-sm" onClick={() => addUpperContext(indexInFilteredLines)}>
-              <ArrowUpIcon />
-            </button>
-            <button className="btn btn-square btn-sm" onClick={() => addBottomContext(indexInFilteredLines)}>
-              <ArrowDownIcon />
+            <button
+              className="btn btn-square btn-sm swap swap-active"
+              onClick={() => {
+                if (!selectedChangedLine) {
+                  lineToFocus.current = params.data
+                  setSelectedChangedLine(params.data)
+                } else {
+                  lineToFocus.current = params.data
+                  setSelectedChangedLine(null)
+                }
+              }}
+            >
+              <div className={selectedChangedLine ? 'swap-off' : 'swap-on'}>
+                <UnfoldMoreIcon />
+              </div>
+              <div className={selectedChangedLine ? 'swap-on' : 'swap-off'}>
+                <UnfoldLessIcon />
+              </div>
             </button>
           </div>
         )}
@@ -137,46 +96,31 @@ export const ReviewTranslationGrid = ({
     )
   }
 
-  const getContextBorders = (lineNumber: number) => {
-    let hasBottomBorder = false
-    let hasTopBorder = false
-    let count = 0
-
-    const indexInFilteredLines = binarySearch(filteredLines, (current) => current.lineNumber - lineNumber)
-    for (const [contextIndexInFilteredLines, context] of contextMap.entries()) {
-      if (
-        indexInFilteredLines >= contextIndexInFilteredLines - context.upperContext.length &&
-        indexInFilteredLines <= contextIndexInFilteredLines + context.bottomContext.length
-      ) {
-        count++
-        if (indexInFilteredLines === contextIndexInFilteredLines - context.upperContext.length) hasTopBorder = true
-        else if (indexInFilteredLines === contextIndexInFilteredLines + context.bottomContext.length)
-          hasBottomBorder = true
-      }
-    }
-
-    return {
-      hasTopBorder: hasTopBorder && count === 1,
-      hasBottomBorder: hasBottomBorder && count === 1,
-      isContained: count > 0
-    }
-  }
-
   return (
     <AgGridReact
-      onGridReady={onReady}
+      onGridReady={(e) => {
+        gridApi.current = e.api
+        onReady?.(e)
+      }}
       theme={myTheme}
       headerHeight={36}
       className="w-full max-w-[1700px] relative h-[calc(100svh-200px)]"
-      rowData={filteredLines.filter((line) => lineNumbersToShow.current.has(line.lineNumber))}
+      rowData={
+        selectedChangedLine !== null
+          ? filteredLines
+          : filteredLines.filter((line) => lineNumbersToShow.current.has(line.lineNumber))
+      }
       rowClassRules={{
-        'ag-cell-changed': ({ data }) => !!data && changedLineNumbers.includes(data.lineNumber),
-        'ag-top-border': ({ data }) => !!data && getContextBorders(data.lineNumber).hasTopBorder,
-        'ag-bottom-border': ({ data }) => !!data && getContextBorders(data.lineNumber).hasBottomBorder,
-        'ag-x-border': ({ data }) => !!data && getContextBorders(data.lineNumber).isContained
+        'ag-cell-changed': ({ data }) => !!data && changedLineNumbers.includes(data.lineNumber)
+      }}
+      pinnedTopRowData={pinnedPosition === 'Top' ? [selectedChangedLine] : undefined}
+      pinnedBottomRowData={pinnedPosition === 'Bottom' ? [selectedChangedLine] : undefined}
+      getRowId={({ data }) => !!data && data.lineNumber.toString()}
+      onBodyScroll={(e) => {
+        checkRowVisibility(e.api)
       }}
       columnDefs={[
-        { field: 'lineNumber', headerName: 'N°', width: 80, sortable: false },
+        { field: 'lineNumber', headerName: 'N°', width: 80, sortable: false, cellClass: 'leading-6!' },
         {
           field: 'original',
           headerName: 'Version anglaise',
@@ -184,6 +128,7 @@ export const ReviewTranslationGrid = ({
           wrapText: true,
           flex: 1,
           sortable: false,
+          cellClass: 'leading-6!',
           cellRenderer: customCellRenderer
         },
         {
@@ -193,6 +138,7 @@ export const ReviewTranslationGrid = ({
           wrapText: true,
           flex: 1,
           sortable: false,
+          cellClass: 'leading-6!',
           cellRenderer: customCellRenderer
         },
         {
@@ -202,6 +148,7 @@ export const ReviewTranslationGrid = ({
           wrapText: true,
           flex: 1,
           sortable: false,
+          cellClass: 'leading-6!',
           cellRenderer: customCellRenderer
         }
       ]}
