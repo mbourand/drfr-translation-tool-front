@@ -11,7 +11,7 @@ export const STORE_KEYS = {
   LAST_SELECTED_SAVE_NAME: 'last_selected_save_name'
 } as const
 
-export const store = await load('stor4.json')
+export const store = await load('stor5.json')
 
 export type StoreUserInfos = Pick<z.infer<typeof UserSchema>, 'id' | 'login' | 'avatar_url'> & {
   accessToken: string

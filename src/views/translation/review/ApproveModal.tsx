@@ -39,7 +39,7 @@ export const ApproveModal = ({ onClose, isVisible, branch }: ApproveModalProps) 
     <Modal
       onClose={onClose}
       isVisible={isVisible}
-      label="Sauvegarder ces changements"
+      label="Approuver ces changements"
       actions={
         <>
           <button className="float-right btn btn-ghost" onClick={onClose}>
@@ -55,7 +55,9 @@ export const ApproveModal = ({ onClose, isVisible, branch }: ApproveModalProps) 
       <div className="flex flex-col gap-2">
         <p>
           Vous êtes sur le point d'approuver les modifications apportées. Une fois approuvée, cette traduction sera
-          ajoutée dans la branche principale du patch. Êtes-vous sûr de vouloir continuer ?
+          ajoutée dans la branche principale du patch. <br />
+          <br />
+          <b>Assurez-vous d'avoir bien relu tous les fichiers modifiés avant de confirmer</b>
         </p>
       </div>
     </Modal>
