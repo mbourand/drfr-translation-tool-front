@@ -10,7 +10,6 @@ import { TRANSLATION_API_URLS } from '../../../routes/translation/routes'
 import { z } from 'zod'
 import { SendIcon } from '../../../components/icons/SendIcon'
 import { TrashIcon } from '../../../components/icons/TrashIcon'
-import { PencilIcon } from '../../../components/icons/PencilIcon'
 import { AddCommentIcon } from '../../../components/icons/AddCommentIcon'
 
 type TranslationGridProps = {
@@ -141,12 +140,6 @@ export const ReviewTranslationGrid = ({
                       {comment.user.login === userLogin && (
                         <>
                           <button
-                            className="btn btn-ghost btn-circle btn-neutral btn-xs p-0.5"
-                            onClick={() => onDeleteCommentClicked(comment.id)}
-                          >
-                            <PencilIcon />
-                          </button>
-                          <button
                             className="btn btn-ghost btn-circle btn-neutral text-error btn-xs p-0.5"
                             onClick={() => onDeleteCommentClicked(comment.id)}
                           >
@@ -192,12 +185,6 @@ export const ReviewTranslationGrid = ({
                     if (textArea) textArea.value = ''
 
                     if (!comment || comment.trim() === '') return
-
-                    console.log('Sending comment:', {
-                      body: comment,
-                      line: params.data.lineNumber + 1,
-                      inReplyTo: lineComments.length > 0 ? lineComments[lineComments.length - 1].id : undefined
-                    })
 
                     setAddCommentToLine(null)
                     onSendComment({

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { SaveChangesModal } from './SaveChangesModal'
 import { FileType } from './SidePanel'
 
@@ -10,6 +10,22 @@ type SaveChangesButtonProps = {
 
 export const SaveChangesButton = ({ branch, changes, files }: SaveChangesButtonProps) => {
   const [isSaveModalVisible, setIsSaveModalVisible] = useState(false)
+
+  useEffect(() => {
+    const abortController = new AbortController()
+    const signal = abortController.signal
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 's' && (event.ctrlKey || event.metaKey)) {
+        event.preventDefault()
+        setIsSaveModalVisible(true)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown, { signal })
+
+    return () => abortController.abort()
+  })
 
   return (
     <>
