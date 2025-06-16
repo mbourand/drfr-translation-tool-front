@@ -75,14 +75,14 @@ export const ReviewTranslationGrid = ({
     else setPinnedPosition('None')
   }
 
-  const initLineNumbersToShow = () => {
+  const computeLineNumbersToShow = () => {
     // The boolean value is true if the line has been changed in the PR
     const map = new Map<number, boolean>()
     for (const lineNumber of changedLineNumbers) map.set(lineNumber, true)
     return map
   }
 
-  const lineNumbersToShow = useRef(initLineNumbersToShow())
+  const lineNumbersToShow = computeLineNumbersToShow()
 
   const customCellRenderer = (params: ICellRendererParams) => {
     const cellText: string = params.value
@@ -95,7 +95,7 @@ export const ReviewTranslationGrid = ({
       <div className="w-full">
         <div className="flex items-center justify-between w-full">
           <p className="block h-full leading-6">{cellText}</p>
-          {lineNumbersToShow.current.get(params.data.lineNumber) === true && (
+          {lineNumbersToShow.get(params.data.lineNumber) === true && (
             <div className="flex gap-1 h-full items-center">
               <button className="btn btn-square btn-xs" onClick={() => setAddCommentToLine(params.data.lineNumber)}>
                 <AddCommentIcon />
@@ -222,7 +222,7 @@ export const ReviewTranslationGrid = ({
       rowData={
         selectedChangedLine !== null
           ? filteredLines
-          : filteredLines.filter((line) => lineNumbersToShow.current.has(line.lineNumber))
+          : filteredLines.filter((line) => lineNumbersToShow.has(line.lineNumber))
       }
       rowClassRules={{
         'ag-cell-changed': ({ data }) => !!data && changedLineNumbers.includes(data.lineNumber),

@@ -9,6 +9,7 @@
     {
       "identifier": "http:default",
       "allow": [
+        { "url": "https://translation-tool-back.deltarune-fr.com/*" },
         { "url": "https://deltarune-fr.com/*" },
         { "url": "http://localhost:3000" },
         { "url": "http://localhost:1420" }

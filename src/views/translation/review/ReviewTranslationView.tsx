@@ -237,7 +237,7 @@ export const ReviewTranslationView = () => {
         )
       })
       .map((line) => line.lineNumber)
-  }, [selectedFile])
+  }, [selectedFileContents])
 
   const linesToShow = useMemo(() => {
     if (!selectedFileContents || !changedLines || changedLines.length === 0) return []
