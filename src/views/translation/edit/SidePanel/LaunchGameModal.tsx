@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { fetchData } from '../../../../modules/fetching/fetcher'
 import { STATIC_ROUTES } from '../../../../routes/static/routes'
+import { ENV } from '../../../../Env'
 
 type LaunchGameModalProps = {
   isVisible: boolean
@@ -102,7 +103,7 @@ export const LaunchGameModal = ({ onClose, isVisible, files }: LaunchGameModalPr
                 savesFolder,
                 savesFiles: selectedSaveFilesData.files.map((file) => ({
                   name: file,
-                  url: '/saves/' + selectedSaveFilesData.path + '/' + file
+                  url: ENV.DRFR_WEBSITE_URL + '/translation-tool/saves/' + selectedSaveFilesData.path + '/' + file
                 })),
                 files
               })

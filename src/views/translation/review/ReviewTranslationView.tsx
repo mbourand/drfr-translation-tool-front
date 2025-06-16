@@ -12,6 +12,12 @@ import { isCellVisible } from '../isCellVisible'
 import { SidePanel } from './SidePanel'
 import { TranslationStringSearch } from './TranslationStringSearch'
 import { binarySearch } from '../../../utils'
+import { ENV } from '../../../Env'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import { fetchData } from '../../../modules/fetching/fetcher'
+import { TRANSLATION_API_URLS } from '../../../routes/translation/routes'
+import { store, STORE_KEYS, StoreUserInfos } from '../../../store/store'
+import { z } from 'zod'
 
 export type ReviewFileType = {
   name: string
@@ -44,7 +50,7 @@ export const ReviewTranslationView = () => {
       isError: isMasterTranslationFilesError,
       error: masterTranslationFilesError
     }
-  } = useTranslationFiles('master')
+  } = useTranslationFiles(ENV.GITHUB_BASE_BRANCH)
 
   const {
     translationFiles: {
@@ -55,10 +61,92 @@ export const ReviewTranslationView = () => {
     }
   } = useTranslationFiles(branch, { atBranchCreation: true })
 
+  const {
+    data: comments,
+    isPending: isCommentsLoading,
+    isError: isCommentsError,
+    error: commentsError,
+    refetch: refetchComments
+  } = useQuery({
+    queryKey: ['comments', branch],
+    queryFn: async () => {
+      const userInfos = await store.get<StoreUserInfos>(STORE_KEYS.USER_INFOS)
+      if (!userInfos) throw new Error('No token found')
+      if (!branch) throw new Error('No branch provided')
+
+      const response = await fetchData({
+        route: TRANSLATION_API_URLS.TRANSLATIONS.LIST_COMMENTS(branch),
+        headers: { Authorization: `Bearer ${userInfos.accessToken}` }
+      })
+
+      return response
+    }
+  })
+
+  const userLogin = useQuery({
+    queryKey: ['user-login'],
+    queryFn: async () => {
+      const userInfos = await store.get<StoreUserInfos>(STORE_KEYS.USER_INFOS)
+      if (!userInfos) throw new Error('No user infos found')
+      return userInfos.login
+    }
+  })
+
+  const deleteComments = useMutation({
+    mutationKey: ['delete-comment'],
+    mutationFn: async (commentId: number) => {
+      const userInfos = await store.get<StoreUserInfos>(STORE_KEYS.USER_INFOS)
+      if (!userInfos) return
+
+      await fetchData({
+        route: TRANSLATION_API_URLS.TRANSLATIONS.DELETE_COMMENT(commentId),
+        headers: { Authorization: `Bearer ${userInfos.accessToken}` }
+      })
+
+      refetchComments()
+    }
+  })
+
+  const sendComment = useMutation({
+    mutationKey: ['send-comment'],
+    mutationFn: async ({
+      line,
+      body,
+      inReplyTo,
+      filePath
+    }: z.infer<typeof TRANSLATION_API_URLS.TRANSLATIONS.ADD_COMMENT.bodySchema>) => {
+      const userInfos = await store.get<StoreUserInfos>(STORE_KEYS.USER_INFOS)
+      if (!userInfos) throw new Error('No user infos found')
+      if (!branch) throw new Error('No branch provided')
+
+      await fetchData({
+        route: TRANSLATION_API_URLS.TRANSLATIONS.ADD_COMMENT,
+        headers: { Authorization: `Bearer ${userInfos.accessToken}` },
+        body: {
+          branch,
+          filePath,
+          body,
+          line,
+          inReplyTo
+        }
+      })
+
+      refetchComments()
+    }
+  })
+
   const isPending =
-    isBranchTranslationFilesLoading || isMasterTranslationFilesLoading || isTranslationFilesAtCreationLoading
-  const isError = isBranchTranslationFilesError || isMasterTranslationFilesError || isTranslationFilesAtCreationError
-  const error = branchTranslationFilesError ?? masterTranslationFilesError ?? translationFilesAtCreationError
+    isBranchTranslationFilesLoading ||
+    isMasterTranslationFilesLoading ||
+    isTranslationFilesAtCreationLoading ||
+    isCommentsLoading
+  const isError =
+    isBranchTranslationFilesError ||
+    isMasterTranslationFilesError ||
+    isTranslationFilesAtCreationError ||
+    isCommentsError
+  const error =
+    branchTranslationFilesError ?? masterTranslationFilesError ?? translationFilesAtCreationError ?? commentsError
 
   const [stringSearchResult, setStringSearchResult] = useState<StringSearchResult | null>(null)
   const [matchLanguage, setMatchLanguage] = useState<MatchLanguages>('fr')
@@ -131,6 +219,26 @@ export const ReviewTranslationView = () => {
       .map((line) => line.lineNumber)
   }, [selectedFileContents])
 
+  const conflictedLines = useMemo(() => {
+    if (!filteredLines) return []
+    const fileFromMasterAtCreation = translationFilesAtCreation?.find(
+      (f) => f.translatedPath === selectedFileContents?.translatedPath
+    )
+    if (!fileFromMasterAtCreation) return []
+    return filteredLines
+      .filter((line) => {
+        const indexInMasterLines = binarySearch(
+          fileFromMasterAtCreation.lines,
+          (masterLine) => masterLine.lineNumber - line.lineNumber
+        )
+        return (
+          line.oldTranslated !== line.newTranslated &&
+          line.oldTranslated !== fileFromMasterAtCreation.lines[indexInMasterLines].translated
+        )
+      })
+      .map((line) => line.lineNumber)
+  }, [selectedFile])
+
   const linesToShow = useMemo(() => {
     if (!selectedFileContents || !changedLines || changedLines.length === 0) return []
     return changedLines.map((lineNumber) => selectedFileContents.lines[lineNumber]).filter((line) => line !== undefined)
@@ -171,10 +279,23 @@ export const ReviewTranslationView = () => {
         {filteredLines && selectedFileContents && selectedFile && (
           <div className="w-full h-full pb-4 flex flex-row justify-center">
             <ReviewTranslationGrid
+              userLogin={userLogin.data ?? ''}
+              comments={comments?.filter((comment) => comment.path === selectedFile.translatedPath) ?? []}
               filteredLines={filteredLines}
               linesToShow={linesToShow}
               changedLineNumbers={changedLines}
+              conflictedLinesNumber={conflictedLines}
               onReady={(e) => setGridApi(e.api)}
+              onSendComment={({ line, body, inReplyTo }) => {
+                sendComment.mutate({
+                  line,
+                  body,
+                  branch: branch ?? '',
+                  filePath: selectedFile.translatedPath,
+                  inReplyTo: inReplyTo ?? undefined
+                })
+              }}
+              onDeleteCommentClicked={(commentId) => deleteComments.mutate(commentId)}
               translatedStringSearchResult={stringSearchResult}
               matchLanguage={matchLanguage}
             />

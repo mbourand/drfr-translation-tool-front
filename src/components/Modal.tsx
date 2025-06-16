@@ -1,4 +1,4 @@
-import { ReactNode, useId } from 'react'
+import { ReactNode, useEffect, useId } from 'react'
 import { twMerge } from 'tailwind-merge'
 import { CrossIcon } from './icons/CrossIcon'
 import { createPortal } from 'react-dom'
@@ -16,6 +16,25 @@ export const Modal = (props: ModalProps) => {
   const id = useId()
 
   const modalRoot = document.getElementById('modal')
+
+  useEffect(() => {
+    if (!modalRoot) return
+
+    const abortController = new AbortController()
+    const signal = abortController.signal
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape' && props.isVisible) {
+        event.preventDefault()
+        props.onClose()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown, { signal })
+
+    return () => abortController.abort()
+  }, [props.isVisible])
+
   if (!modalRoot) {
     return null
   }

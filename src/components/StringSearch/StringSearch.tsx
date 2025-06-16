@@ -1,4 +1,4 @@
-import { ReactNode } from 'react'
+import { ReactNode, useEffect, useRef } from 'react'
 import { twMerge } from 'tailwind-merge'
 import { MatchCaseIcon } from '../icons/MatchCaseIcon'
 import { ArrowUpIcon } from '../icons/ArrowUpIcon'
@@ -25,11 +25,30 @@ export const StringSearch = ({
   setMatchCase,
   setMatchWord
 }: StringSearchProps) => {
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    const abortController = new AbortController()
+    const signal = abortController.signal
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'KeyF' && (e.ctrlKey || e.metaKey) && inputRef.current) {
+        e.preventDefault()
+        inputRef.current.focus()
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown, { signal })
+
+    return () => abortController.abort()
+  })
+
   return (
     <div className={twMerge('join', className)}>
       <div>
         <div className="relative">
           <input
+            ref={inputRef}
             className="input input-sm join-item pr-16"
             type="text"
             onChange={(e) => searchStrings(e.target.value)}
