@@ -16,7 +16,8 @@
         "width": 1280,
         "height": 720,
         "maximized": true,
-        "zoomHotkeysEnabled": true
+        "zoomHotkeysEnabled": true,
+        "useHttpsScheme": true
       }
     ],
     "security": {
