@@ -2,10 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": [
-    "main"
-  ],
-  "local": true,
+  "windows": ["main"],
   "permissions": [
     "core:default",
     "opener:default",
@@ -39,9 +36,7 @@
     "fs:allow-rename",
     {
       "identifier": "fs:scope",
-      "allow": [
-        "**"
-      ]
+      "allow": ["**"]
     },
     "fs:allow-seek",
     "fs:allow-read",
