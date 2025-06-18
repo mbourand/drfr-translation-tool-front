@@ -3,7 +3,7 @@ name = "drfr-translation-tool"
 version = "1.0.0"
 description = "Outil facilitant la traduction de Deltarune en français."
 authors = ["mbourand"]
-edition = "2025"
+edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
