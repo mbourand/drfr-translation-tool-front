@@ -2,7 +2,9 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capability for the main window",
-  "windows": ["main"],
+  "windows": [
+    "main"
+  ],
   "local": true,
   "permissions": [
     "core:default",
@@ -10,10 +12,18 @@
     {
       "identifier": "http:default",
       "allow": [
-        { "url": "https://translation-tool-back.deltarune-fr.com/*" },
-        { "url": "https://deltarune-fr.com/*" },
-        { "url": "http://localhost:3000" },
-        { "url": "http://localhost:1420" }
+        {
+          "url": "https://translation-tool-back.deltarune-fr.com/*"
+        },
+        {
+          "url": "https://deltarune-fr.com/*"
+        },
+        {
+          "url": "http://localhost:3000"
+        },
+        {
+          "url": "http://localhost:1420"
+        }
       ]
     },
     "shell:default",
@@ -29,10 +39,13 @@
     "fs:allow-rename",
     {
       "identifier": "fs:scope",
-      "allow": ["**"]
+      "allow": [
+        "**"
+      ]
     },
     "fs:allow-seek",
     "fs:allow-read",
-    "fs:allow-exists"
+    "fs:allow-exists",
+    "log:default"
   ]
 }
