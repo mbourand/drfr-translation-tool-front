@@ -1,5 +1,5 @@
 [package]
-name = "Outil de Traduction Deltarune FR"
+name = "drfr-translation-tool"
 version = "1.0.0"
 description = "Outil facilitant la traduction de Deltarune en français."
 authors = ["mbourand"]
