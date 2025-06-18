@@ -20,7 +20,7 @@ jobs:
           # - platform: 'ubuntu-22.04' # for Tauri v1 you could replace this with ubuntu-20.04.
           #   args: ''
           - platform: 'windows-latest'
-            args: '--debug'
+            args: ''
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -57,4 +57,5 @@ jobs:
           releaseBody: 'See the assets to download this version and install.'
           releaseDraft: true
           prerelease: false
+          includeDebug: true
           args: ${{ matrix.args }}
