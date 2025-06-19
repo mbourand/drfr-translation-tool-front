@@ -16,7 +16,7 @@ const getAppBaseUrl = async () => {
   const os = platform()
 
   if (os === 'windows') {
-    return 'http://tauri.localhost'
+    return 'https://tauri.localhost'
   }
 
   return 'tauri://localhost'
