@@ -1,5 +1,5 @@
 import { LoginWithGithubButton } from '../../components/LoginWithGithubButton'
-import { startOAuthFlow, stopOAuthServer } from '../../lib/oauth'
+import { startOAuthFlow } from '../../lib/oauth'
 import { GITHUB_URLS } from '../../routes/github/routes'
 
 export const AuthLoginView = () => {

@@ -7,9 +7,12 @@ import { lazy } from 'react'
 import { OverviewView } from './views/Overview/OverviewView'
 import { EditTranslationView } from './views/translation/edit/EditTranslationView'
 import { ReviewTranslationView } from './views/translation/review/ReviewTranslationView'
+import { stopOAuthServer } from './lib/oauth'
 
 const AuthLoginView = lazy(() => import('./views/auth/AuthLoginView').then((m) => ({ default: m.AuthLoginView })))
 const AuthConfirmView = lazy(() => import('./views/auth/AuthConfirmView').then((m) => ({ default: m.AuthConfirmView })))
+
+stopOAuthServer()
 
 function App() {
   return (
