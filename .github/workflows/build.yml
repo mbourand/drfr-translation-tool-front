@@ -51,6 +51,12 @@ jobs:
       - uses: tauri-apps/tauri-action@v0.5.20
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VITE_GITHUB_BASE_URL: ${{ secrets.VITE_GITHUB_BASE_URL }}
+          VITE_GITHUB_APP_CLIENT_ID: ${{ secrets.VITE_GITHUB_APP_CLIENT_ID }}
+          VITE_TRANSLATION_API_BASE_URL: ${{ secrets.VITE_TRANSLATION_API_BASE_URL }}
+          VITE_DRFR_WEBSITE_URL: ${{ secrets.VITE_DRFR_WEBSITE_URL }}
+          VITE_GITHUB_BASE_BRANCH: ${{ secrets.VITE_GITHUB_BASE_BRANCH }}
+
         with:
           tagName: app-v__VERSION__ # the action automatically replaces \_\_VERSION\_\_ with the app version.
           releaseName: 'App v__VERSION__'
