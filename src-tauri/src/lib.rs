@@ -4,6 +4,8 @@ use std::io::{Cursor, Write};
 use std::path::PathBuf;
 use std::process::{Command, Stdio};
 
+use tauri::{WebviewUrl, WebviewWindowBuilder};
+
 #[tauri::command]
 async fn import_strings(
     source_data_win_path: &str,
@@ -82,7 +84,10 @@ fn unzip_file(path: String, target_dir: String) -> Result<(), String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+	let port: u16 = 1420;
+
     tauri::Builder::default()
+        .plugin(tauri_plugin_localhost::Builder::new(port).build())
         .plugin(tauri_plugin_log::Builder::new().build())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_dialog::init())
@@ -95,6 +100,13 @@ pub fn run() {
             import_strings,
             unzip_file
         ])
+		.setup(move |app| {
+			let url = format!("http://localhost:{}", port).parse().unwrap();
+			WebviewWindowBuilder::new(app, "main".to_string(), WebviewUrl::External(url))
+				.title("Localhost Example")
+				.build()?;
+			Ok(())
+		})
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
