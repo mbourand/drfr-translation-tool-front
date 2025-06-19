@@ -1,4 +1,4 @@
-import { start, cancel, onUrl, onInvalidUrl } from '@fabianlars/tauri-plugin-oauth'
+import { start, cancel } from '@fabianlars/tauri-plugin-oauth'
 import { TRANSLATION_APP_PAGES } from '../routes/pages/routes'
 import { platform } from '@tauri-apps/plugin-os'
 import { invoke } from '@tauri-apps/api/core'
