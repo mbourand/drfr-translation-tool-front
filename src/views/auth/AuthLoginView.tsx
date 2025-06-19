@@ -1,4 +1,5 @@
 import { LoginWithGithubButton } from '../../components/LoginWithGithubButton'
+import { startOAuthFlow, stopOAuthServer } from '../../lib/oauth'
 import { GITHUB_URLS } from '../../routes/github/routes'
 
 export const AuthLoginView = () => {
@@ -20,7 +21,12 @@ export const AuthLoginView = () => {
             Vos données ne sont stockées que sur votre ordinateur.
           </p>
           <div className="card-actions justify-end">
-            <LoginWithGithubButton onClick={() => window.open(GITHUB_URLS.AUTHORIZE_APP, '_self')} />
+            <LoginWithGithubButton
+              onClick={async () => {
+                await startOAuthFlow()
+                window.open(GITHUB_URLS.AUTHORIZE_APP, '_self')
+              }}
+            />
           </div>
         </div>
       </div>
