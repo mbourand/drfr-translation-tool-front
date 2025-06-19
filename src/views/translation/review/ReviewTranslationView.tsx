@@ -8,9 +8,7 @@ import { MatchLanguages, ReviewLineType } from '../edit/types'
 import { useMemo, useState } from 'react'
 import { GridApi } from 'ag-grid-community'
 import { isTechnicalString } from '../../../modules/game/strings'
-import { isCellVisible } from '../isCellVisible'
 import { SidePanel } from './SidePanel'
-import { TranslationStringSearch } from './TranslationStringSearch'
 import { binarySearch } from '../../../utils'
 import { ENV } from '../../../Env'
 import { useMutation, useQuery } from '@tanstack/react-query'
@@ -148,9 +146,9 @@ export const ReviewTranslationView = () => {
   const error =
     branchTranslationFilesError ?? masterTranslationFilesError ?? translationFilesAtCreationError ?? commentsError
 
-  const [stringSearchResult, setStringSearchResult] = useState<StringSearchResult | null>(null)
-  const [matchLanguage, setMatchLanguage] = useState<MatchLanguages>('fr')
-  const [gridApi, setGridApi] = useState<GridApi<ReviewLineType> | null>(null)
+  const [stringSearchResult] = useState<StringSearchResult | null>(null)
+  const [matchLanguage] = useState<MatchLanguages>('fr')
+  const [_, setGridApi] = useState<GridApi<ReviewLineType> | null>(null)
   const [selectedFile, setSelectedFile] = useState<ReviewFileType | null>(null)
 
   const gridFiles = useMemo(() => {
@@ -260,20 +258,6 @@ export const ReviewTranslationView = () => {
           </NavLink>
           <h1 className="text-3xl font-semibold text-center w-full">Correction de : {prName}</h1>
         </div>
-        {filteredLines && (
-          <TranslationStringSearch
-            filteredLines={filteredLines}
-            matchLanguage={matchLanguage}
-            onMatchChanged={(result) => {
-              setStringSearchResult(result)
-              if (!result || !result.selectedMatch || !gridApi) return
-              const rowIndex = result.selectedMatch.rowIndex
-              if (!isCellVisible(rowIndex)) gridApi.ensureIndexVisible(rowIndex, 'middle')
-              gridApi.refreshCells({ force: true })
-            }}
-            onMatchLanguageChanged={setMatchLanguage}
-          />
-        )}
         {isPending && <div>Téléchargement des fichiers...</div>}
         {isError && <div>Erreur lors du téléchargement des fichiers {error?.message}</div>}
         {filteredLines && selectedFileContents && selectedFile && (
