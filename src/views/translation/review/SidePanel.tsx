@@ -1,5 +1,7 @@
+import { useMemo } from 'react'
 import { ThemeButton } from '../../../components/ThemeButton'
 import { FolderIcon } from '../../../components/icons/FolderIcon'
+import { LaunchGameButton } from '../edit/SidePanel/LaunchGameButton'
 import { ApproveButtonButton } from './ApproveButton'
 import { ReviewFileType } from './ReviewTranslationView'
 
@@ -21,6 +23,18 @@ type SidePanelProps = {
 }
 
 export const SidePanel = ({ categories, onSelected, selected, title, branch }: SidePanelProps) => {
+  const files = useMemo(() => Object.values(categories).flat(), [categories])
+
+  const filesForLaunchingGame = useMemo(() => {
+    return files.map((file) => {
+      return {
+        pathsInGameFolder: file.pathsInGameFolder,
+        content: file.lines.map((line) => line.newTranslated).join('\n'),
+        pathInGitFolder: file.translatedPath
+      }
+    })
+  }, [files])
+
   return (
     <>
       <div className="drawer lg:drawer-open w-fit z-30">
@@ -63,6 +77,7 @@ export const SidePanel = ({ categories, onSelected, selected, title, branch }: S
               </li>
             ))}
             <div className="mt-auto flex flex-col gap-3">
+              <LaunchGameButton files={filesForLaunchingGame} />
               <ApproveButtonButton branch={branch} />
             </div>
           </ul>
