@@ -21,7 +21,7 @@ type TranslationGridProps = {
   linesToShow: ReviewLineType[]
   comments: z.infer<ReturnType<(typeof TRANSLATION_API_URLS)['TRANSLATIONS']['LIST_COMMENTS']>['responseSchema']>
   onSendComment: (params: { body: string; line: number; inReplyTo?: number }) => void
-  onDeleteCommentClicked: (commentId: number) => void
+  onDeleteCommentClicked: (params: { commentId: number; pullRequestNumber: number }) => void
   userLogin: string
   conflictedLinesNumber: number[]
   editable: boolean
@@ -169,7 +169,15 @@ export const ReviewTranslationGrid = ({
                         <>
                           <button
                             className="btn btn-ghost btn-circle btn-neutral text-error btn-xs p-0.5"
-                            onClick={() => onDeleteCommentClicked(comment.id)}
+                            onClick={() => {
+                              const pullRequestNumber = parseInt(comment.pull_request_url.split('/').pop() ?? '', 10)
+                              if (isNaN(pullRequestNumber)) return
+
+                              onDeleteCommentClicked({
+                                commentId: comment.id,
+                                pullRequestNumber
+                              })
+                            }}
                           >
                             <TrashIcon />
                           </button>

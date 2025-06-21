@@ -94,12 +94,14 @@ export const ReviewTranslationView = () => {
 
   const deleteComments = useMutation({
     mutationKey: ['delete-comment'],
-    mutationFn: async (commentId: number) => {
+    mutationFn: async ({ commentId, pullRequestNumber }: { commentId: number; pullRequestNumber: number }) => {
       const userInfos = await store.get<StoreUserInfos>(STORE_KEYS.USER_INFOS)
       if (!userInfos) return
 
+      console.log('Deleting comment', commentId, pullRequestNumber)
+
       await fetchData({
-        route: TRANSLATION_API_URLS.TRANSLATIONS.DELETE_COMMENT(commentId),
+        route: TRANSLATION_API_URLS.TRANSLATIONS.DELETE_COMMENT(commentId, pullRequestNumber),
         headers: { Authorization: `Bearer ${userInfos.accessToken}` }
       })
 
@@ -315,7 +317,7 @@ export const ReviewTranslationView = () => {
                   inReplyTo: inReplyTo ?? undefined
                 })
               }}
-              onDeleteCommentClicked={(commentId) => deleteComments.mutate(commentId)}
+              onDeleteCommentClicked={(params) => deleteComments.mutate(params)}
               translatedStringSearchResult={stringSearchResult}
               matchLanguage={matchLanguage}
             />

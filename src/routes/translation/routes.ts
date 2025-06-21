@@ -102,7 +102,8 @@ export const TRANSLATION_API_URLS = {
             line: z.number(),
             user: z.object({ login: z.string(), avatar_url: z.string() }),
             body: z.string(),
-            id: z.number()
+            id: z.number(),
+            pull_request_url: z.string()
           })
           .passthrough()
           .array()
@@ -121,9 +122,9 @@ export const TRANSLATION_API_URLS = {
         success: z.boolean()
       })
     },
-    DELETE_COMMENT: (commentId: number) =>
+    DELETE_COMMENT: (commentId: number, pullRequestNumber: number) =>
       ({
-        url: `${ENV.TRANSLATION_API_BASE_URL}/translation/comment?commentId=${commentId}`,
+        url: `${ENV.TRANSLATION_API_BASE_URL}/translation/comment?commentId=${commentId}&pullRequestNumber=${pullRequestNumber}`,
         method: 'DELETE',
         responseSchema: z.object({
           success: z.boolean()
