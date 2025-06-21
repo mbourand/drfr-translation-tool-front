@@ -16,6 +16,7 @@ import { fetchData } from '../../../modules/fetching/fetcher'
 import { TRANSLATION_API_URLS } from '../../../routes/translation/routes'
 import { store, STORE_KEYS, StoreUserInfos } from '../../../store/store'
 import { z } from 'zod'
+import { makeLineKey } from '../edit/changes'
 
 export type ReviewFileType = {
   name: string
@@ -30,6 +31,7 @@ export type ReviewFileType = {
 export const ReviewTranslationView = () => {
   const [searchParams] = useSearchParams()
   const branch = useParams().branch
+  const isYours = searchParams.get('isYours') === 'true'
   const prName = searchParams.get('name') ?? ''
 
   const {
@@ -217,6 +219,8 @@ export const ReviewTranslationView = () => {
       .map((line) => line.lineNumber)
   }, [selectedFileContents])
 
+  const [editedLines, setEditedLines] = useState(new Map<string, string>())
+
   const conflictedLines = useMemo(() => {
     if (!filteredLines) return []
     const fileFromMasterAtCreation = translationFilesAtCreation?.find(
@@ -237,10 +241,31 @@ export const ReviewTranslationView = () => {
       .map((line) => line.lineNumber)
   }, [selectedFileContents])
 
-  const linesToShow = useMemo(() => {
-    if (!selectedFileContents || !changedLines || changedLines.length === 0) return []
-    return changedLines.map((lineNumber) => selectedFileContents.lines[lineNumber]).filter((line) => line !== undefined)
-  }, [changedLines, selectedFileContents])
+  const allLinesThatChanged = useMemo(() => {
+    const editedLinesArray = Array.from(editedLines.entries()).filter(
+      ([key]) => !!selectedFile && key.split(':')[0] === selectedFile.translatedPath
+    )
+
+    const hasAtLeastOneChange = changedLines?.length || editedLinesArray.length
+
+    if (!selectedFileContents || !hasAtLeastOneChange) return []
+
+    const tmpMap = new Map<number, ReviewLineType>()
+
+    for (const lineNumber of changedLines) {
+      tmpMap.set(lineNumber, selectedFileContents.lines[lineNumber])
+    }
+
+    for (const [key, newValue] of editedLinesArray) {
+      const lineNumber = parseInt(key.split(':')[1], 10)
+      tmpMap.set(lineNumber, {
+        ...selectedFileContents.lines[lineNumber],
+        newTranslated: newValue
+      })
+    }
+
+    return Array.from(tmpMap.values())
+  }, [changedLines, selectedFileContents, editedLines])
 
   return (
     <div className="flex flex-row">
@@ -248,8 +273,10 @@ export const ReviewTranslationView = () => {
         branch={branch ?? ''}
         title="Fichiers de traduction"
         categories={filesByCategory}
+        editedLines={editedLines}
         onSelected={(selected) => setSelectedFile(selected)}
         selected={selectedFile}
+        isYours={isYours}
       />
       <div className="flex flex-col items-center w-full px-4">
         <div className="flex flex-row w-full items-center mb-4 pt-2">
@@ -263,10 +290,19 @@ export const ReviewTranslationView = () => {
         {filteredLines && selectedFileContents && selectedFile && (
           <div className="w-full h-full pb-4 flex flex-row justify-center">
             <ReviewTranslationGrid
+              editable={isYours}
+              onLineEdited={({ data, newValue }) => {
+                const key = makeLineKey(selectedFile.translatedPath, data.lineNumber)
+                setEditedLines((prev) => {
+                  if (data.newTranslated === newValue) prev.delete(key)
+                  else prev.set(key, newValue)
+                  return new Map(prev)
+                })
+              }}
               userLogin={userLogin.data ?? ''}
               comments={comments?.filter((comment) => comment.path === selectedFile.translatedPath) ?? []}
               filteredLines={filteredLines}
-              linesToShow={linesToShow}
+              linesToShow={allLinesThatChanged}
               changedLineNumbers={changedLines}
               conflictedLinesNumber={conflictedLines}
               onReady={(e) => setGridApi(e.api)}

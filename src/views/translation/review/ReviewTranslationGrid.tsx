@@ -1,5 +1,5 @@
 import { AgGridReact } from 'ag-grid-react'
-import { GridApi, GridReadyEvent, ICellRendererParams } from 'ag-grid-community'
+import { GridApi, GridReadyEvent, ICellRendererParams, NewValueParams } from 'ag-grid-community'
 import { StringSearchResult } from '../../../components/StringSearch/types'
 import { MatchLanguages, ReviewLineType } from '../edit/types'
 import { myTheme } from '../edit/grid-theme'
@@ -24,7 +24,11 @@ type TranslationGridProps = {
   onDeleteCommentClicked: (commentId: number) => void
   userLogin: string
   conflictedLinesNumber: number[]
+  editable: boolean
+  onLineEdited: (event: NewValueParams<ReviewLineType, any>) => void
 }
+
+const RESOLVED_COMMENT = '[RESOLVED]'
 
 export const ReviewTranslationGrid = ({
   filteredLines,
@@ -34,7 +38,9 @@ export const ReviewTranslationGrid = ({
   onSendComment,
   onDeleteCommentClicked,
   userLogin,
-  conflictedLinesNumber
+  conflictedLinesNumber,
+  editable,
+  onLineEdited
 }: TranslationGridProps) => {
   const gridApi = useRef<GridApi | null>(null)
   const [selectedChangedLine, setSelectedChangedLine] = useState<ReviewLineType | null>(null)
@@ -90,6 +96,7 @@ export const ReviewTranslationGrid = ({
     if (params.node.rowIndex == null || !params.data || params.colDef?.field !== 'newTranslated') return cellText
 
     const lineComments = comments.filter((comment) => comment.line - 1 === params.data.lineNumber)
+    const isResolved = lineComments[lineComments.length - 1]?.body === RESOLVED_COMMENT
 
     return (
       <div className="w-full">
@@ -97,9 +104,11 @@ export const ReviewTranslationGrid = ({
           <p className="block h-full leading-6">{cellText}</p>
           {lineNumbersToShow.get(params.data.lineNumber) === true && (
             <div className="flex gap-1 h-full items-center">
-              <button className="btn btn-square btn-xs" onClick={() => setAddCommentToLine(params.data.lineNumber)}>
-                <AddCommentIcon />
-              </button>
+              {(isResolved || lineComments.length === 0) && (
+                <button className="btn btn-square btn-xs" onClick={() => setAddCommentToLine(params.data.lineNumber)}>
+                  <AddCommentIcon />
+                </button>
+              )}
               <button
                 className="btn btn-square btn-xs swap swap-active"
                 onClick={() => {
@@ -122,9 +131,28 @@ export const ReviewTranslationGrid = ({
             </div>
           )}
         </div>
-        {(lineComments.length > 0 || addCommentToLine === params.data.lineNumber) && (
-          <div className="flex flex-col border-2 rounded-md border-base-content/10 mt-4 gap-2 mb-2 bg-base-100">
-            <h2 className="font-bold text-lg pl-2 pt-1">Commentaires</h2>
+        {((!isResolved && lineComments.length > 0) || addCommentToLine === params.data.lineNumber) && (
+          <div
+            className="flex flex-col border-2 rounded-md border-base-content/10 mt-4 gap-2 mb-2 bg-base-100"
+            onDoubleClickCapture={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between px-2 pt-2">
+              <h2 className="font-bold text-lg">Commentaires</h2>
+              <button
+                onClick={() => {
+                  setAddCommentToLine(null)
+                  onSendComment({
+                    body: RESOLVED_COMMENT,
+                    line: params.data.lineNumber + 1,
+                    inReplyTo:
+                      addCommentToLine === params.data.lineNumber ? undefined : lineComments[lineComments.length - 1].id
+                  })
+                }}
+                className="btn btn-sm btn-soft"
+              >
+                <p className="h-fit">Marquer comme résolu</p>
+              </button>
+            </div>
             {lineComments.map((comment) => (
               <div key={comment.id}>
                 <div className="border-b border-base-content/10" />
@@ -264,6 +292,9 @@ export const ReviewTranslationGrid = ({
           flex: 1,
           sortable: false,
           cellClass: 'leading-6!',
+          editable: editable,
+          cellEditor: editable ? 'agTextCellEditor' : undefined,
+          onCellValueChanged: editable ? onLineEdited : undefined,
           cellRenderer: customCellRenderer
         }
       ]}

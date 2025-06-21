@@ -19,9 +19,10 @@ const mapPRToTranslation = (pr: TranslationType, isYours: boolean) => ({
   title: pr.title,
   author: pr.user.login,
   authorAvatar: pr.user.avatar_url,
-  href: isYours
-    ? TRANSLATION_APP_PAGES.TRANSLATION.EDIT(pr.head.ref.toString(), pr.title.toString())
-    : TRANSLATION_APP_PAGES.TRANSLATION.REVIEW(pr.head.ref.toString(), pr.title.toString())
+  href:
+    pr.labels.some((label) => label.name === WIP_LABEL) && pr.state === 'open' && isYours
+      ? TRANSLATION_APP_PAGES.TRANSLATION.EDIT(pr.head.ref.toString(), pr.title.toString())
+      : TRANSLATION_APP_PAGES.TRANSLATION.REVIEW(pr.head.ref.toString(), pr.title.toString(), isYours)
 })
 
 const getTranslations = async () => {

@@ -4,6 +4,9 @@ import { FolderIcon } from '../../../components/icons/FolderIcon'
 import { LaunchGameButton } from '../edit/SidePanel/LaunchGameButton'
 import { ApproveButtonButton } from './ApproveButton'
 import { ReviewFileType } from './ReviewTranslationView'
+import { makeLineKey } from '../edit/changes'
+import { SaveChangesButton } from '../edit/SidePanel/SaveChangesButton'
+import { LineType } from '../edit/types'
 
 export type FileType = {
   name: string
@@ -12,6 +15,7 @@ export type FileType = {
   pathsInGameFolder: {
     windows: string
   }
+  isYours: boolean
 }
 
 type SidePanelProps = {
@@ -19,21 +23,40 @@ type SidePanelProps = {
   categories: Record<string, ReviewFileType[]>
   onSelected: (file: ReviewFileType) => void
   selected: ReviewFileType | null
+  editedLines: Map<string, string>
   branch: string
+  isYours: boolean
 }
 
-export const SidePanel = ({ categories, onSelected, selected, title, branch }: SidePanelProps) => {
+export const SidePanel = ({
+  categories,
+  isYours,
+  editedLines,
+  onSelected,
+  selected,
+  title,
+  branch
+}: SidePanelProps) => {
   const files = useMemo(() => Object.values(categories).flat(), [categories])
 
   const filesForLaunchingGame = useMemo(() => {
     return files.map((file) => {
       return {
         pathsInGameFolder: file.pathsInGameFolder,
-        content: file.lines.map((line) => line.newTranslated).join('\n'),
+        content: file.lines
+          .map((line) => editedLines.get(makeLineKey(file.translatedPath, line.lineNumber)) ?? line.newTranslated)
+          .join('\n'),
         pathInGitFolder: file.translatedPath
       }
     })
-  }, [files])
+  }, [files, editedLines])
+
+  const filesForSavingChanges = useMemo(() => {
+    return files.map((f) => ({
+      ...f,
+      lines: f.lines.map((l) => ({ ...l, translated: l.newTranslated } as LineType))
+    }))
+  }, [files, editedLines])
 
   return (
     <>
@@ -78,7 +101,8 @@ export const SidePanel = ({ categories, onSelected, selected, title, branch }: S
             ))}
             <div className="mt-auto flex flex-col gap-3">
               <LaunchGameButton files={filesForLaunchingGame} />
-              <ApproveButtonButton branch={branch} />
+              {isYours && <SaveChangesButton branch={branch} files={filesForSavingChanges} changes={editedLines} />}
+              {!isYours && <ApproveButtonButton branch={branch} />}
             </div>
           </ul>
         </div>
