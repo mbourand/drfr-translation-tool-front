@@ -98,8 +98,6 @@ export const ReviewTranslationView = () => {
       const userInfos = await store.get<StoreUserInfos>(STORE_KEYS.USER_INFOS)
       if (!userInfos) return
 
-      console.log('Deleting comment', commentId, pullRequestNumber)
-
       await fetchData({
         route: TRANSLATION_API_URLS.TRANSLATIONS.DELETE_COMMENT(commentId, pullRequestNumber),
         headers: { Authorization: `Bearer ${userInfos.accessToken}` }
@@ -296,9 +294,9 @@ export const ReviewTranslationView = () => {
               onLineEdited={({ data, newValue }) => {
                 const key = makeLineKey(selectedFile.translatedPath, data.lineNumber)
                 setEditedLines((prev) => {
-                  if (data.newTranslated === newValue) prev.delete(key)
-                  else prev.set(key, newValue)
-                  return new Map(prev)
+                  const newEditedLines = new Map(prev)
+                  newEditedLines.set(key, newValue)
+                  return newEditedLines
                 })
               }}
               userLogin={userLogin.data ?? ''}
