@@ -36,3 +36,14 @@ html {
 .ag-cell {
   white-space: break-spaces;
 }
+
+@font-face {
+  font-family: 'DTM-Mono';
+  src: url('/DTM-Mono.otf') format('opentype');
+}
+
+.font-dtm-mono {
+  font-family: 'DTM-Mono', monospace;
+  font-weight: 400;
+  font-style: normal;
+}

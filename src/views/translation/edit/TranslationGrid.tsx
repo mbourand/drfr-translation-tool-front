@@ -1,5 +1,5 @@
 import { AgGridReact } from 'ag-grid-react'
-import { GridReadyEvent, ICellRendererParams, NewValueParams } from 'ag-grid-community'
+import { CellFocusedEvent, GridReadyEvent, ICellRendererParams, NewValueParams } from 'ag-grid-community'
 import { myTheme } from './grid-theme'
 import { LineType, MatchLanguages } from './types'
 import { StringSearchResult } from '../../../components/StringSearch/types'
@@ -10,6 +10,7 @@ type TranslationGridProps = {
   changedLineNumbers: number[]
   onLineEdited: (event: NewValueParams<LineType, any>) => void
   onReady?: (event: GridReadyEvent<LineType>) => void
+  onCellFocused?: (event: CellFocusedEvent<LineType, any>) => void
   translatedStringSearchResult: StringSearchResult | null
   matchLanguage: MatchLanguages
 }
@@ -20,7 +21,8 @@ export const TranslationGrid = ({
   onLineEdited,
   onReady,
   translatedStringSearchResult,
-  matchLanguage
+  matchLanguage,
+  onCellFocused
 }: TranslationGridProps) => {
   const customCellRenderer = (params: ICellRendererParams) => {
     const cellText: string = params.value
@@ -70,6 +72,7 @@ export const TranslationGrid = ({
       rowClassRules={{
         'ag-cell-changed': ({ data }) => !!data && changedLineNumbers.includes(data.lineNumber)
       }}
+      onCellFocused={onCellFocused}
       columnDefs={[
         { field: 'lineNumber', headerName: 'N°', width: 80, sortable: false },
         {

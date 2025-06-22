@@ -12,6 +12,7 @@ import { makeLineKey } from './changes'
 import { isTechnicalString } from '../../../modules/game/strings'
 import { useTranslationFiles } from '../../../hooks/useTranslationFiles'
 import { isCellVisible } from '../isCellVisible'
+import { DialogVisualizer } from '../../../components/DialogVisualizer/DialogVisualizer'
 
 export const EditTranslationView = () => {
   const branch = useParams().branch
@@ -25,6 +26,8 @@ export const EditTranslationView = () => {
 
   const [stringSearchResult, setStringSearchResult] = useState<StringSearchResult | null>(null)
   const [matchLanguage, setMatchLanguage] = useState<MatchLanguages>('fr')
+
+  const [focusedCell, setFocusedCell] = useState<string | null>(null)
 
   const {
     translationFiles: { data: files, isPending, isError, error }
@@ -74,6 +77,7 @@ export const EditTranslationView = () => {
           </NavLink>
           <h1 className="text-3xl font-semibold text-center w-full">Traduction de : {prName}</h1>
         </div>
+        <DialogVisualizer dialog={focusedCell ?? ''} />
         {filteredLines && (
           <TranslationStringSearch
             filteredLines={filteredLines}
@@ -100,6 +104,12 @@ export const EditTranslationView = () => {
                   else prev.set(key, newValue)
                   return new Map(prev)
                 })
+              }}
+              onCellFocused={(e) => {
+                if (!filteredLines || !e.rowIndex || typeof e.column !== 'object') return
+                const value = filteredLines[e.rowIndex]?.[(e.column?.getColId() as keyof LineType) ?? 'translated']
+                if (typeof value !== 'string') return
+                setFocusedCell(value)
               }}
               linesToShow={filteredLines ?? []}
               changedLineNumbers={Array.from(changedLines.keys())
