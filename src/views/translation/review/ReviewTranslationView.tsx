@@ -17,6 +17,7 @@ import { TRANSLATION_API_URLS } from '../../../routes/translation/routes'
 import { store, STORE_KEYS, StoreUserInfos } from '../../../store/store'
 import { z } from 'zod'
 import { makeLineKey } from '../edit/changes'
+import { DialogVisualizer } from '../../../components/DialogVisualizer/DialogVisualizer'
 
 export type ReviewFileType = {
   name: string
@@ -152,6 +153,7 @@ export const ReviewTranslationView = () => {
   const [matchLanguage] = useState<MatchLanguages>('fr')
   const [_, setGridApi] = useState<GridApi<ReviewLineType> | null>(null)
   const [selectedFile, setSelectedFile] = useState<ReviewFileType | null>(null)
+  const [focusedCell, setFocusedCell] = useState<string | null>(null)
 
   const gridFiles = useMemo(() => {
     if (!branchTranslationFiles || !translationFilesAtCreation || !masterTranslationFiles) return undefined
@@ -287,9 +289,20 @@ export const ReviewTranslationView = () => {
         </div>
         {isPending && <div>Téléchargement des fichiers...</div>}
         {isError && <div>Erreur lors du téléchargement des fichiers {error?.message}</div>}
+        <DialogVisualizer dialog={focusedCell ?? ''} />
         {filteredLines && selectedFileContents && selectedFile && (
           <div className="w-full h-full pb-4 flex flex-row justify-center">
             <ReviewTranslationGrid
+              onCellFocused={(e) => {
+                if (!filteredLines || !e.rowIndex || typeof e.column !== 'object') return
+
+                const value = e.api.getDisplayedRowAtIndex(e.rowIndex)?.data?.[
+                  (e.column?.getColId() as keyof ReviewLineType) ?? 'newTranslated'
+                ]
+                if (typeof value !== 'string') return
+
+                setFocusedCell(value)
+              }}
               editable={isYours}
               onLineEdited={({ data, newValue }) => {
                 const key = makeLineKey(selectedFile.translatedPath, data.lineNumber)

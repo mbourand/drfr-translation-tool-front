@@ -1,5 +1,5 @@
 import { AgGridReact } from 'ag-grid-react'
-import { GridApi, GridReadyEvent, ICellRendererParams, NewValueParams } from 'ag-grid-community'
+import { CellFocusedEvent, GridApi, GridReadyEvent, ICellRendererParams, NewValueParams } from 'ag-grid-community'
 import { StringSearchResult } from '../../../components/StringSearch/types'
 import { MatchLanguages, ReviewLineType } from '../edit/types'
 import { myTheme } from '../edit/grid-theme'
@@ -26,6 +26,7 @@ type TranslationGridProps = {
   conflictedLinesNumber: number[]
   editable: boolean
   onLineEdited: (event: NewValueParams<ReviewLineType, any>) => void
+  onCellFocused: (event: CellFocusedEvent<ReviewLineType, any>) => void
 }
 
 const RESOLVED_COMMENT = '[RESOLVED]'
@@ -40,7 +41,8 @@ export const ReviewTranslationGrid = ({
   userLogin,
   conflictedLinesNumber,
   editable,
-  onLineEdited
+  onLineEdited,
+  onCellFocused
 }: TranslationGridProps) => {
   const gridApi = useRef<GridApi | null>(null)
   const [selectedChangedLine, setSelectedChangedLine] = useState<ReviewLineType | null>(null)
@@ -248,6 +250,7 @@ export const ReviewTranslationGrid = ({
   return (
     <AgGridReact
       animateRows={false}
+      onCellFocused={onCellFocused}
       onGridReady={(e) => {
         gridApi.current = e.api
         onReady?.(e)
