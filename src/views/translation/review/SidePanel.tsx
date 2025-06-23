@@ -7,6 +7,7 @@ import { ReviewFileType } from './ReviewTranslationView'
 import { makeLineKey } from '../edit/changes'
 import { SaveChangesButton } from '../edit/SidePanel/SaveChangesButton'
 import { LineType } from '../edit/types'
+import { DifferenceIcon } from '../../../components/icons/DifferenceIcon'
 
 export type FileType = {
   name: string
@@ -87,12 +88,17 @@ export const SidePanel = ({
                       <button
                         className={
                           selected?.translatedPath === file.translatedPath && selected?.translatedPath === category
-                            ? 'menu-active'
+                            ? 'menu-active flex items-center'
                             : ''
                         }
                         onClick={() => onSelected(file)}
                       >
                         {file.name}
+                        {file.hasChanges && (
+                          <div className="text-success">
+                            <DifferenceIcon />
+                          </div>
+                        )}
                       </button>
                     </li>
                   ))}

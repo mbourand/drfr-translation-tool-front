@@ -1,13 +1,15 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { PreviewOffIcon } from '../icons/PreviewOffIcon'
 import { PreviewIcon } from '../icons/PreviewIcon'
 import { twMerge } from 'tailwind-merge'
+import { MoreHorizIcon } from '../icons/MoreHorizIcon'
 
 const FORCED_LINE_BREAK_CHAR = '&'
 
-type BoxKind = 'legendoftenna' | 'classic'
+type BoxKind = 'legendoftenna' | 'classic' | 'shoptalk' | 'shop' | 'battle'
 
 type BoxType = {
+  name: string
   maxCharactersPerLine: number
   maxCharactersWithHead: number
   maxLines: number
@@ -18,18 +20,47 @@ type BoxType = {
 
 const BOX_CONFIGS = {
   classic: {
+    name: 'Classique',
     maxCharactersPerLine: 33,
     maxCharactersWithHead: 26,
-    characterWidth: 19.7,
+    characterWidth: 17.8,
     maxLines: 3,
-    lineHeight: 44,
+    lineHeight: 40,
     hasAsteriskHandling: true
   },
   legendoftenna: {
+    name: 'The Legend of Tenna',
     maxCharactersPerLine: 22,
     maxCharactersWithHead: 22,
-    characterWidth: 19.7,
+    characterWidth: 17.8,
     maxLines: 3,
+    lineHeight: 44,
+    hasAsteriskHandling: false
+  },
+  shoptalk: {
+    name: 'Shop pleine taille',
+    maxCharactersPerLine: 33,
+    maxCharactersWithHead: 33,
+    characterWidth: 17.8,
+    maxLines: 5,
+    lineHeight: 44,
+    hasAsteriskHandling: true
+  },
+  shop: {
+    name: 'Shop partie gauche',
+    maxCharactersPerLine: 23,
+    maxCharactersWithHead: 23,
+    characterWidth: 17.8,
+    maxLines: 5,
+    lineHeight: 44,
+    hasAsteriskHandling: true
+  },
+  battle: {
+    name: 'Combat',
+    maxCharactersPerLine: Infinity,
+    maxCharactersWithHead: Infinity,
+    characterWidth: 17.8,
+    maxLines: Infinity,
     lineHeight: 44,
     hasAsteriskHandling: false
   }
@@ -40,7 +71,7 @@ type DialogVisualizerProps = {
 }
 
 export const DialogVisualizer = ({ dialog }: DialogVisualizerProps) => {
-  const [isVisible, setIsVisible] = useState(true)
+  const [isVisible, setIsVisible] = useState(false)
   const [boxKind, setBoxKind] = useState<BoxKind>('classic')
 
   const config = BOX_CONFIGS[boxKind]
@@ -121,15 +152,35 @@ export const DialogVisualizer = ({ dialog }: DialogVisualizerProps) => {
     return lines
   }, [sanitizedDialog, boxKind])
 
+  const selectRef = useRef<HTMLDetailsElement>(null)
+
+  useEffect(() => {
+    const abortController = new AbortController()
+    const signal = abortController.signal
+
+    const onClickOutside = (event: MouseEvent) => {
+      if (selectRef.current && !selectRef.current.contains(event.target as Node)) {
+        selectRef.current.removeAttribute('open')
+      }
+    }
+
+    document.addEventListener('click', onClickOutside, { signal })
+
+    return () => {
+      abortController.abort()
+    }
+  }, [])
+
   return (
     <>
       <div className="fixed z-20 bottom-4 right-4">
         {isVisible && (
           <div
-            className="font-dtm-mono text-[32px] bg-black leading-11 relative w-full h-full outline-white outline-5 px-4 py-2 overflow-hidden text-white whitespace-nowrap"
+            className="font-dtm-mono text-[28px] bg-black leading-10 relative outline-white outline-5 px-4 py-2 overflow-hidden text-white whitespace-nowrap"
             style={{
-              width: config.characterWidth * config.maxCharactersPerLine + 32, // 32 for padding
-              height: config.lineHeight * config.maxLines + 16,
+              width:
+                config.maxLines !== Infinity ? config.characterWidth * config.maxCharactersPerLine + 32 : undefined, // 32 for padding
+              height: config.maxLines !== Infinity ? config.lineHeight * config.maxLines + 16 : undefined,
               paddingLeft: isHeadDialog
                 ? (config.maxCharactersPerLine - config.maxCharactersWithHead) * config.characterWidth + 16
                 : undefined
@@ -156,16 +207,26 @@ export const DialogVisualizer = ({ dialog }: DialogVisualizerProps) => {
           {isVisible ? <PreviewOffIcon /> : <PreviewIcon />}
         </button>
         {isVisible && (
-          <button
-            className={twMerge(
-              'swap btn btn-circle btn-primary absolute z-100 btn-sm top-5 right-0 translate-x-1/2!',
-              boxKind === 'classic' && 'btn-soft'
-            )}
-            onClick={() => setBoxKind(boxKind === 'classic' ? 'legendoftenna' : 'classic')}
-          >
-            <input type="checkbox" />
-            <span>TV</span>
-          </button>
+          <details ref={selectRef} className="dropdown absolute z-100 top-0 left-0 -translate-x-1/2 -translate-y-1/2">
+            <summary className="btn btn-circle btn-soft btn-sm">
+              <MoreHorizIcon />
+            </summary>
+            <ul className="menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm top-0 -translate-y-[calc(100%+4px)]">
+              {(Object.keys(BOX_CONFIGS) as BoxKind[]).map((kind) => (
+                <li key={kind}>
+                  <a
+                    className={twMerge(boxKind === kind && 'bg-primary text-primary-content')}
+                    onClick={() => {
+                      selectRef.current?.removeAttribute('open')
+                      setBoxKind(kind)
+                    }}
+                  >
+                    {BOX_CONFIGS[kind].name}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </details>
         )}
       </div>
     </>
