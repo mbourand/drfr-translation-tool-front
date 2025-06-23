@@ -27,6 +27,7 @@ export type ReviewFileType = {
   pathsInGameFolder: {
     windows: string
   }
+  hasChanges: boolean
 }
 
 export const ReviewTranslationView = () => {
@@ -163,18 +164,28 @@ export const ReviewTranslationView = () => {
     for (let i = 0; i < branchTranslationFiles?.length; i++) {
       const branchFile = branchTranslationFiles[i]
       const masterFile = masterTranslationFiles[i]
+      const atCreationFile = translationFilesAtCreation[i]
+
+      const lines = []
+      let hasChanges = false
+      for (let j = 0; j < branchFile.lines.length; j++) {
+        const line = branchFile.lines[j]
+        lines.push({
+          category: branchFile.category,
+          lineNumber: line.lineNumber,
+          original: line.original,
+          oldTranslated: masterFile.lines[j].translated,
+          newTranslated: line.translated
+        })
+        if (!hasChanges && line.translated !== atCreationFile.lines[j].translated) {
+          hasChanges = true
+        }
+      }
 
       result.push({
         ...branchFile,
-        lines: branchFile.lines.map((line, j) => {
-          return {
-            category: branchFile.category,
-            lineNumber: line.lineNumber,
-            original: line.original,
-            oldTranslated: masterFile.lines[j].translated,
-            newTranslated: line.translated
-          }
-        })
+        lines,
+        hasChanges
       })
     }
 
@@ -243,32 +254,6 @@ export const ReviewTranslationView = () => {
       .map((line) => line.lineNumber)
   }, [selectedFileContents])
 
-  const allLinesThatChanged = useMemo(() => {
-    const editedLinesArray = Array.from(editedLines.entries()).filter(
-      ([key]) => !!selectedFile && key.split(':')[0] === selectedFile.translatedPath
-    )
-
-    const hasAtLeastOneChange = changedLines?.length || editedLinesArray.length
-
-    if (!selectedFileContents || !hasAtLeastOneChange) return []
-
-    const tmpMap = new Map<number, ReviewLineType>()
-
-    for (const lineNumber of changedLines) {
-      tmpMap.set(lineNumber, selectedFileContents.lines[lineNumber])
-    }
-
-    for (const [key, newValue] of editedLinesArray) {
-      const lineNumber = parseInt(key.split(':')[1], 10)
-      tmpMap.set(lineNumber, {
-        ...selectedFileContents.lines[lineNumber],
-        newTranslated: newValue
-      })
-    }
-
-    return Array.from(tmpMap.values())
-  }, [changedLines, selectedFileContents, editedLines])
-
   return (
     <div className="flex flex-row">
       <SidePanel
@@ -315,7 +300,7 @@ export const ReviewTranslationView = () => {
               userLogin={userLogin.data ?? ''}
               comments={comments?.filter((comment) => comment.path === selectedFile.translatedPath) ?? []}
               filteredLines={filteredLines}
-              linesToShow={allLinesThatChanged}
+              showAllLines={!selectedFile.hasChanges}
               changedLineNumbers={changedLines}
               conflictedLinesNumber={conflictedLines}
               onReady={(e) => setGridApi(e.api)}

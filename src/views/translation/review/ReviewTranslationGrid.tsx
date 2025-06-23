@@ -18,13 +18,13 @@ type TranslationGridProps = {
   onReady?: (event: GridReadyEvent<ReviewLineType>) => void
   translatedStringSearchResult: StringSearchResult | null
   matchLanguage: MatchLanguages
-  linesToShow: ReviewLineType[]
   comments: z.infer<ReturnType<(typeof TRANSLATION_API_URLS)['TRANSLATIONS']['LIST_COMMENTS']>['responseSchema']>
   onSendComment: (params: { body: string; line: number; inReplyTo?: number }) => void
   onDeleteCommentClicked: (params: { commentId: number; pullRequestNumber: number }) => void
   userLogin: string
   conflictedLinesNumber: number[]
   editable: boolean
+  showAllLines?: boolean
   onLineEdited: (event: NewValueParams<ReviewLineType, any>) => void
   onCellFocused: (event: CellFocusedEvent<ReviewLineType, any>) => void
 }
@@ -42,7 +42,8 @@ export const ReviewTranslationGrid = ({
   conflictedLinesNumber,
   editable,
   onLineEdited,
-  onCellFocused
+  onCellFocused,
+  showAllLines
 }: TranslationGridProps) => {
   const gridApi = useRef<GridApi | null>(null)
   const [selectedChangedLine, setSelectedChangedLine] = useState<ReviewLineType | null>(null)
@@ -259,7 +260,7 @@ export const ReviewTranslationGrid = ({
       headerHeight={36}
       className="w-full max-w-[1700px] relative h-[calc(100svh-200px)]"
       rowData={
-        selectedChangedLine !== null
+        selectedChangedLine !== null || showAllLines
           ? filteredLines
           : filteredLines.filter((line) => lineNumbersToShow.has(line.lineNumber))
       }
