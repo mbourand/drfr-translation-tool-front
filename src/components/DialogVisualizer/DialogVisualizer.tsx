@@ -109,7 +109,7 @@ export const DialogVisualizer = ({ dialog }: DialogVisualizerProps) => {
     let currentWord = ''
     const maxCharactersPerLineThisDialog = isHeadDialog ? config.maxCharactersWithHead : config.maxCharactersPerLine
     for (let i = 0; i < sanitizedDialog.length; i++) {
-      const hasLeadingAsterisk = currentLine.startsWith('*')
+      const hasLeadingAsterisk = config.hasAsteriskHandling && currentLine.startsWith('*')
       const maxCharactersThisLine = hasLeadingAsterisk
         ? maxCharactersPerLineThisDialog - 2
         : maxCharactersPerLineThisDialog
@@ -143,7 +143,7 @@ export const DialogVisualizer = ({ dialog }: DialogVisualizerProps) => {
     }
 
     if (currentWord) {
-      const hasLeadingAsterisk = currentLine.startsWith('*')
+      const hasLeadingAsterisk = config.hasAsteriskHandling && currentLine.startsWith('*')
       const maxCharactersThisLine = hasLeadingAsterisk
         ? maxCharactersPerLineThisDialog - 2
         : maxCharactersPerLineThisDialog
