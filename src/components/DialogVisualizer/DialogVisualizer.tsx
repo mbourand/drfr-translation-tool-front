@@ -4,7 +4,7 @@ import { PreviewIcon } from '../icons/PreviewIcon'
 import { twMerge } from 'tailwind-merge'
 import { MoreHorizIcon } from '../icons/MoreHorizIcon'
 
-const FORCED_LINE_BREAK_CHAR = '&'
+const FORCED_LINE_BREAK_CHAR = ['&', '#']
 
 type BoxKind = 'legendoftenna' | 'classic' | 'shoptalk' | 'shop' | 'battle'
 
@@ -122,7 +122,7 @@ export const DialogVisualizer = ({ dialog }: DialogVisualizerProps) => {
         continue
       }
 
-      if (char === FORCED_LINE_BREAK_CHAR) {
+      if (FORCED_LINE_BREAK_CHAR.includes(char)) {
         if (currentLine === '') currentLine = currentWord.replace(/^\s(\S)/, '$1')
         else currentLine += currentWord
         lines.push(currentLine)
@@ -142,6 +142,15 @@ export const DialogVisualizer = ({ dialog }: DialogVisualizerProps) => {
     }
 
     if (currentWord) {
+      const hasLeadingAsterisk = currentLine.startsWith('*')
+      const maxCharactersThisLine =
+        hasLeadingAsterisk && lines.length > 0 ? maxCharactersPerLineThisDialog - 2 : maxCharactersPerLineThisDialog
+
+      if (currentLine.length + currentWord.length > maxCharactersThisLine) {
+        lines.push(currentLine)
+        currentLine = ''
+      }
+
       if (currentLine === '') currentLine = currentWord.replace(/^\s(\S)/, '$1')
       else currentLine += currentWord
       currentWord = ''
