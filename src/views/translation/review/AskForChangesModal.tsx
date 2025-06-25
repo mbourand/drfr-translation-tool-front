@@ -6,23 +6,23 @@ import { Modal } from '../../../components/Modal'
 import { useNavigate } from 'react-router'
 import { TRANSLATION_APP_PAGES } from '../../../routes/pages/routes'
 
-type ApproveModalProps = {
+type AskForChangesModalProps = {
   isVisible: boolean
   onClose: () => void
   branch: string
 }
 
-export const ApproveModal = ({ onClose, isVisible, branch }: ApproveModalProps) => {
+export const AskForChangesModal = ({ onClose, isVisible, branch }: AskForChangesModalProps) => {
   const navigate = useNavigate()
 
   const { isPending, mutate } = useMutation({
-    mutationKey: ['approve-translation', branch],
+    mutationKey: ['ask-for-changes', branch],
     mutationFn: async () => {
       const userInfos = await store.get<StoreUserInfos>(STORE_KEYS.USER_INFOS)
       if (!userInfos) throw new Error('No token found')
 
       await fetchData({
-        route: TRANSLATION_API_URLS.TRANSLATIONS.APPROVE,
+        route: TRANSLATION_API_URLS.TRANSLATIONS.MARK_AS_REVIEWED,
         headers: { Authorization: `Bearer ${userInfos.accessToken}` },
         body: {
           branch
@@ -39,7 +39,7 @@ export const ApproveModal = ({ onClose, isVisible, branch }: ApproveModalProps) 
     <Modal
       onClose={onClose}
       isVisible={isVisible}
-      label="Approuver ces changements"
+      label="Demander des modifications"
       actions={
         <>
           <button className="float-right btn btn-ghost" onClick={onClose}>
@@ -53,14 +53,7 @@ export const ApproveModal = ({ onClose, isVisible, branch }: ApproveModalProps) 
       }
     >
       <div className="flex flex-col gap-2">
-        <p>
-          Vous êtes sur le point d'approuver les modifications apportées. Une fois approuvée, le staff lira cette
-          traduction pour pouvoir l'ajouter à la branche principale du patch. <br />
-          <br />
-          <b>
-            Cette action est irréversible. Assurez-vous d'avoir bien relu tous les fichiers modifiés avant de confirmer
-          </b>
-        </p>
+        <p>Vous êtes sur le point de demander au traducteur de relire les commentaires que vous avez laissés.</p>
       </div>
     </Modal>
   )

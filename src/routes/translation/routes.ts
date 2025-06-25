@@ -34,6 +34,18 @@ export const TRANSLATION_API_URLS = {
       bodySchema: z.object({ branch: z.string() }),
       responseSchema: z.object({ success: z.boolean() })
     },
+    APPROVE: {
+      url: `${ENV.TRANSLATION_API_BASE_URL}/translation/approve`,
+      method: 'POST',
+      bodySchema: z.object({ branch: z.string() }),
+      responseSchema: z.object({ success: z.boolean() })
+    },
+    MARK_AS_REVIEWED: {
+      url: `${ENV.TRANSLATION_API_BASE_URL}/translation/mark-as-reviewed`,
+      method: 'POST',
+      bodySchema: z.object({ branch: z.string() }),
+      responseSchema: z.object({ success: z.boolean() })
+    },
     FILES: (branch: string) =>
       ({
         url: `${ENV.TRANSLATION_API_BASE_URL}/translation/files?branch=${branch}`,
@@ -84,12 +96,6 @@ export const TRANSLATION_API_URLS = {
           })
         )
       })
-    },
-    APPROVE: {
-      url: `${ENV.TRANSLATION_API_BASE_URL}/translation/approve`,
-      method: 'POST',
-      bodySchema: z.object({ branch: z.string() }),
-      responseSchema: z.object({ success: z.boolean() })
     },
     LIST_COMMENTS: (branch: string) =>
       ({

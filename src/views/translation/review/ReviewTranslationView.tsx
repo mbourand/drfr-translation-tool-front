@@ -5,7 +5,7 @@ import { ArrowLeftIcon } from '../../../components/icons/ArrowLeftIcon'
 import { TRANSLATION_APP_PAGES } from '../../../routes/pages/routes'
 import { StringSearchResult } from '../../../components/StringSearch/types'
 import { MatchLanguages, ReviewLineType } from '../edit/types'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { GridApi } from 'ag-grid-community'
 import { isTechnicalString } from '../../../modules/game/strings'
 import { SidePanel } from './SidePanel'
@@ -34,6 +34,7 @@ export const ReviewTranslationView = () => {
   const [searchParams] = useSearchParams()
   const branch = useParams().branch
   const isYours = searchParams.get('isYours') === 'true'
+  const isReviewed = searchParams.get('isReviewed') === 'true'
   const prName = searchParams.get('name') ?? ''
 
   const {
@@ -154,7 +155,7 @@ export const ReviewTranslationView = () => {
   const [matchLanguage] = useState<MatchLanguages>('fr')
   const [_, setGridApi] = useState<GridApi<ReviewLineType> | null>(null)
   const [selectedFile, setSelectedFile] = useState<ReviewFileType | null>(null)
-  const [focusedCell, setFocusedCell] = useState<string | null>(null)
+  const focusedCellRef = useRef<string | null>(null)
 
   const gridFiles = useMemo(() => {
     if (!branchTranslationFiles || !translationFilesAtCreation || !masterTranslationFiles) return undefined
@@ -263,6 +264,7 @@ export const ReviewTranslationView = () => {
         editedLines={editedLines}
         onSelected={(selected) => setSelectedFile(selected)}
         selected={selectedFile}
+        isReviewed={isReviewed}
         isYours={isYours}
       />
       <div className="flex flex-col items-center w-full px-4">
@@ -274,7 +276,7 @@ export const ReviewTranslationView = () => {
         </div>
         {isPending && <div>Téléchargement des fichiers...</div>}
         {isError && <div>Erreur lors du téléchargement des fichiers {error?.message}</div>}
-        <DialogVisualizer dialog={focusedCell ?? ''} />
+        <DialogVisualizer getDialog={() => focusedCellRef.current ?? ''} />
         {filteredLines && selectedFileContents && selectedFile && (
           <div className="w-full h-full pb-4 flex flex-row justify-center">
             <ReviewTranslationGrid
@@ -286,7 +288,7 @@ export const ReviewTranslationView = () => {
                 ]
                 if (typeof value !== 'string') return
 
-                setFocusedCell(value)
+                focusedCellRef.current = value
               }}
               editable={isYours}
               onLineEdited={({ data, newValue }) => {

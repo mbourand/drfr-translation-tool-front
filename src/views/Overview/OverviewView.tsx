@@ -13,16 +13,24 @@ import { useNavigate } from 'react-router'
 const TRANSLATION_LABEL = 'Traduction'
 const WIP_LABEL = 'En cours'
 const REVIEW_LABEL = 'Correction'
+const REVIEWED_LABEL = 'Relecture effectuée'
+const APPROVED_LABEL = 'Approuvée'
 
 const mapPRToTranslation = (pr: TranslationType, isYours: boolean) => ({
   id: pr.id,
   title: pr.title,
   author: pr.user.login,
   authorAvatar: pr.user.avatar_url,
+  isApproved: pr.labels.some((label) => label.name === APPROVED_LABEL),
   href:
     pr.labels.some((label) => label.name === WIP_LABEL) && pr.state === 'open' && isYours
       ? TRANSLATION_APP_PAGES.TRANSLATION.EDIT(pr.head.ref.toString(), pr.title.toString())
-      : TRANSLATION_APP_PAGES.TRANSLATION.REVIEW(pr.head.ref.toString(), pr.title.toString(), isYours)
+      : TRANSLATION_APP_PAGES.TRANSLATION.REVIEW(
+          pr.head.ref.toString(),
+          pr.title.toString(),
+          isYours,
+          pr.labels.some((label) => label.name === REVIEWED_LABEL)
+        )
 })
 
 const getTranslations = async () => {
@@ -43,8 +51,13 @@ const getTranslations = async () => {
     wipTranslations: prs
       .filter((pr) => pr.labels.some((label) => label.name === WIP_LABEL && pr.state === 'open'))
       .map(translationMapper),
-    reviewTranslations: prs
+    waitingForReviewTranslations: prs
       .filter((pr) => pr.labels.some((label) => label.name === REVIEW_LABEL) && pr.state === 'open')
+      .map(translationMapper),
+    reviewedTranslations: prs
+      .filter(
+        (pr) => pr.labels.some((label) => [REVIEWED_LABEL, APPROVED_LABEL].includes(label.name)) && pr.state === 'open'
+      )
       .map(translationMapper),
     doneTranslations: prs.filter((pr) => !!pr.merged_at && pr.state === 'closed').map(translationMapper)
   }
@@ -83,8 +96,12 @@ export const OverviewView = () => {
         translations: data.wipTranslations
       },
       {
-        title: 'En correction',
-        translations: data.reviewTranslations
+        title: 'En attente de relecture',
+        translations: data.waitingForReviewTranslations
+      },
+      {
+        title: 'Relecture effectuée',
+        translations: data.reviewedTranslations
       },
       {
         title: 'Traductions terminées',
