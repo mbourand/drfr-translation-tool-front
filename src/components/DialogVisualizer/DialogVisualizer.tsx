@@ -101,6 +101,7 @@ export const DialogVisualizer = ({ getDialog }: DialogVisualizerProps) => {
   const isHeadDialog = /^\\[A-Z][A-Za-z0-9]/.test(dialog)
 
   const sanitizedDialog = dialog
+    .replace(/\[RETOUR A LA LIGNE\]/g, '&')
     .replace(/\r/g, '')
     .replace(/\^\d/g, '')
     .replace(/\\c[A-Z]/g, '')
