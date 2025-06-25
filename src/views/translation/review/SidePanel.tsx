@@ -8,6 +8,8 @@ import { makeLineKey } from '../edit/changes'
 import { SaveChangesButton } from '../edit/SidePanel/SaveChangesButton'
 import { LineType } from '../edit/types'
 import { DifferenceIcon } from '../../../components/icons/DifferenceIcon'
+import { AskForChangesButton } from './AskForChangesButton'
+import { SubmitToReviewButton } from '../edit/SidePanel/SubmitToReviewButton'
 
 export type FileType = {
   name: string
@@ -27,6 +29,7 @@ type SidePanelProps = {
   editedLines: Map<string, string>
   branch: string
   isYours: boolean
+  isReviewed: boolean
 }
 
 export const SidePanel = ({
@@ -36,6 +39,7 @@ export const SidePanel = ({
   onSelected,
   selected,
   title,
+  isReviewed,
   branch
 }: SidePanelProps) => {
   const files = useMemo(() => Object.values(categories).flat(), [categories])
@@ -107,7 +111,9 @@ export const SidePanel = ({
             ))}
             <div className="mt-auto flex flex-col gap-3">
               <LaunchGameButton files={filesForLaunchingGame} />
+              {isYours && isReviewed && <SubmitToReviewButton branch={branch} />}
               {isYours && <SaveChangesButton branch={branch} files={filesForSavingChanges} changes={editedLines} />}
+              {!isYours && <AskForChangesButton branch={branch} />}
               {!isYours && <ApproveButtonButton branch={branch} />}
             </div>
           </ul>

@@ -34,6 +34,7 @@ export const ReviewTranslationView = () => {
   const [searchParams] = useSearchParams()
   const branch = useParams().branch
   const isYours = searchParams.get('isYours') === 'true'
+  const isReviewed = searchParams.get('isReviewed') === 'true'
   const prName = searchParams.get('name') ?? ''
 
   const {
@@ -263,6 +264,7 @@ export const ReviewTranslationView = () => {
         editedLines={editedLines}
         onSelected={(selected) => setSelectedFile(selected)}
         selected={selectedFile}
+        isReviewed={isReviewed}
         isYours={isYours}
       />
       <div className="flex flex-col items-center w-full px-4">
