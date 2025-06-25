@@ -1,6 +1,6 @@
 import { NavLink, useNavigate, useParams, useSearchParams } from 'react-router'
 import { TRANSLATION_APP_PAGES } from '../../../routes/pages/routes'
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { SidePanel, FileType } from './SidePanel/SidePanel'
 import { TranslationGrid } from './TranslationGrid'
 import { ArrowLeftIcon } from '../../../components/icons/ArrowLeftIcon'
@@ -27,7 +27,7 @@ export const EditTranslationView = () => {
   const [stringSearchResult, setStringSearchResult] = useState<StringSearchResult | null>(null)
   const [matchLanguage, setMatchLanguage] = useState<MatchLanguages>('fr')
 
-  const [focusedCell, setFocusedCell] = useState<string | null>(null)
+  const focusedCellRef = useRef<string | null>(null)
 
   const {
     translationFiles: { data: files, isPending, isError, error }
@@ -77,7 +77,7 @@ export const EditTranslationView = () => {
           </NavLink>
           <h1 className="text-3xl font-semibold text-center w-full">Traduction de : {prName}</h1>
         </div>
-        <DialogVisualizer dialog={focusedCell ?? ''} />
+        <DialogVisualizer getDialog={() => focusedCellRef.current ?? ''} />
         {filteredLines && (
           <TranslationStringSearch
             filteredLines={filteredLines}
@@ -109,7 +109,7 @@ export const EditTranslationView = () => {
                 if (!filteredLines || !e.rowIndex || typeof e.column !== 'object') return
                 const value = filteredLines[e.rowIndex]?.[(e.column?.getColId() as keyof LineType) ?? 'translated']
                 if (typeof value !== 'string') return
-                setFocusedCell(value)
+                focusedCellRef.current = value
               }}
               linesToShow={filteredLines ?? []}
               changedLineNumbers={Array.from(changedLines.keys())

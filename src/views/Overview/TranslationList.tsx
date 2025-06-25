@@ -1,12 +1,14 @@
 import { ReactNode } from 'react'
 import { To, useNavigate } from 'react-router'
 import { twMerge } from 'tailwind-merge'
+import { CheckIcon } from '../../components/icons/CheckIcon'
 
 type TranslationListProps = {
   title: string
   translations: {
     id: number
     title: string
+    isApproved: boolean
     author: string
     authorAvatar: string
     href: To
@@ -36,10 +38,19 @@ export const TranslationList = ({
             onClick={() => navigate(translation.href)}
           >
             <h3 className="text-lg font-semibold group-hover:underline underline-offset-2 mb-4">{translation.title}</h3>
-            <div className="flex flex-row justify-end items-center gap-2">
-              <p className="opacity-60 w-fit text-sm">par {translation.author}</p>
-              <div className="avatar w-8">
-                <img className="rounded-full" src={translation.authorAvatar} />
+            <div className="flex flex-row justify-between items-center gap-2">
+              {translation.isApproved ? (
+                <div className="text-success">
+                  <CheckIcon />
+                </div>
+              ) : (
+                <div />
+              )}
+              <div className="flex items-center gap-2">
+                <p className="opacity-60 w-fit text-sm">par {translation.author}</p>
+                <div className="avatar w-8">
+                  <img className="rounded-full" src={translation.authorAvatar} />
+                </div>
               </div>
             </div>
           </button>
