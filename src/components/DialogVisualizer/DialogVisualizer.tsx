@@ -3,6 +3,7 @@ import { PreviewOffIcon } from '../icons/PreviewOffIcon'
 import { PreviewIcon } from '../icons/PreviewIcon'
 import { twMerge } from 'tailwind-merge'
 import { MoreHorizIcon } from '../icons/MoreHorizIcon'
+import { useInterval } from 'react-use'
 
 const FORCED_LINE_BREAK_CHAR = ['&', '#']
 
@@ -67,14 +68,17 @@ const BOX_CONFIGS = {
 } as const satisfies Record<BoxKind, BoxType>
 
 type DialogVisualizerProps = {
-  dialog: string
+  getDialog: () => string
 }
 
-export const DialogVisualizer = ({ dialog }: DialogVisualizerProps) => {
+export const DialogVisualizer = ({ getDialog }: DialogVisualizerProps) => {
+  const [dialog, setDialog] = useState(getDialog())
   const [isVisible, setIsVisible] = useState(false)
   const [boxKind, setBoxKind] = useState<BoxKind>('classic')
 
   const config = BOX_CONFIGS[boxKind]
+
+  useInterval(() => setDialog(getDialog()), 100)
 
   useEffect(() => {
     const abortController = new AbortController()
