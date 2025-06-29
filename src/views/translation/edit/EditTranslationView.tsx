@@ -11,7 +11,7 @@ import { TranslationStringSearch } from './TranslationStringSearch'
 import { makeLineKey } from './changes'
 import { isTechnicalString } from '../../../modules/game/strings'
 import { useTranslationFiles } from '../../../hooks/useTranslationFiles'
-import { isCellVisible } from '../isCellVisible'
+import { isRowVisible } from '../isCellVisible'
 import { DialogVisualizer } from '../../../components/DialogVisualizer/DialogVisualizer'
 
 export const EditTranslationView = () => {
@@ -86,7 +86,8 @@ export const EditTranslationView = () => {
               setStringSearchResult(result)
               if (!result || !result.selectedMatch || !gridApi) return
               const rowIndex = result.selectedMatch.rowIndex
-              if (!isCellVisible(rowIndex)) gridApi.ensureIndexVisible(rowIndex, 'middle')
+              if (!isRowVisible(gridApi, filteredLines[rowIndex].lineNumber))
+                gridApi.ensureIndexVisible(rowIndex, 'middle')
               gridApi.refreshCells({ force: true })
             }}
             onMatchLanguageChanged={setMatchLanguage}
@@ -106,7 +107,7 @@ export const EditTranslationView = () => {
                 })
               }}
               onCellFocused={(e) => {
-                if (!filteredLines || !e.rowIndex || typeof e.column !== 'object') return
+                if (!filteredLines || e.rowIndex == null || typeof e.column !== 'object') return
                 const value = filteredLines[e.rowIndex]?.[(e.column?.getColId() as keyof LineType) ?? 'translated']
                 if (typeof value !== 'string') return
                 focusedCellRef.current = value

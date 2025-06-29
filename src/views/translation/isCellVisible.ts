@@ -1,34 +1,18 @@
-function getFirstAndLastVisibleRowsIndexes(): { firstVisibleRowIndex: number; lastVisibleRowIndex: number } | null {
-  const rows = document.querySelectorAll<HTMLElement>('.ag-center-cols-container .ag-row')
-  const body = document.querySelector('.ag-body')
+import { GridApi } from 'ag-grid-community'
 
-  if (!rows || !body) return null
+export const isRowVisible = (api: GridApi, rowLineNumber: number) => {
+  const rowNode = api.getRowNode(rowLineNumber.toString())
+  if (!rowNode) return
 
-  const bodyTop = body.getBoundingClientRect().top
-  const bodyBottom = bodyTop + body.clientHeight
+  const rowTop = rowNode.rowTop
+  const scrollTop = api.getVerticalPixelRange().top
+  const scrollBottom = api.getVerticalPixelRange().bottom
+  const rowHeight = rowNode.rowHeight
 
-  let firstVisibleRowIndex = -1
-  let lastVisibleRowIndex = -1
+  if (rowTop == null || rowHeight == null) return
 
-  const sortedRows = Array.from(rows).sort((a, b) => {
-    const indexA = parseInt(a.getAttribute('row-index') || '0')
-    const indexB = parseInt(b.getAttribute('row-index') || '0')
-    return indexA - indexB
-  })
+  const isTooHigh = scrollTop > rowTop + rowHeight
+  const isTooLow = scrollBottom < rowTop
 
-  sortedRows.forEach((row) => {
-    const rowAbsolutePos = row.getBoundingClientRect().top
-    const rowIndex = row.getAttribute('row-index')
-    if (rowAbsolutePos >= bodyTop && firstVisibleRowIndex === -1 && rowIndex) firstVisibleRowIndex = parseInt(rowIndex)
-    if (rowAbsolutePos + row.clientHeight * 2 > bodyBottom && lastVisibleRowIndex === -1 && rowIndex)
-      lastVisibleRowIndex = parseInt(rowIndex)
-  })
-
-  return { firstVisibleRowIndex, lastVisibleRowIndex }
-}
-
-export const isCellVisible = (rowIndex: number): boolean => {
-  const indexes = getFirstAndLastVisibleRowsIndexes()
-  if (!indexes) return false
-  return rowIndex >= indexes.firstVisibleRowIndex && rowIndex <= indexes.lastVisibleRowIndex
+  return !isTooHigh && !isTooLow
 }

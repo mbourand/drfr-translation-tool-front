@@ -25,7 +25,7 @@ export const TranslationStringSearch = ({
   useEffect(() => {
     if (stringSearch.stringSearchResult.current)
       stringSearch.searchStrings(stringSearch.stringSearchResult.current?.pattern)
-  }, [matchLanguage])
+  }, [matchLanguage, filteredLines])
 
   return (
     <StringSearch
