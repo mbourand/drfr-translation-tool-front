@@ -3,7 +3,7 @@ import { CellFocusedEvent, GridApi, GridReadyEvent, ICellRendererParams, NewValu
 import { StringSearchResult } from '../../../components/StringSearch/types'
 import { MatchLanguages, ReviewLineType } from '../edit/types'
 import { myTheme } from '../edit/grid-theme'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { UnfoldMoreIcon } from '../../../components/icons/UnfoldMoreIcon'
 import { UnfoldLessIcon } from '../../../components/icons/UnfoldLessIcon'
 import { TRANSLATION_API_URLS } from '../../../routes/translation/routes'
@@ -11,12 +11,12 @@ import { z } from 'zod'
 import { SendIcon } from '../../../components/icons/SendIcon'
 import { TrashIcon } from '../../../components/icons/TrashIcon'
 import { AddCommentIcon } from '../../../components/icons/AddCommentIcon'
+import { getParts } from '../../../string-search/get-parts'
 
 type TranslationGridProps = {
   filteredLines: ReviewLineType[]
   changedLineNumbers: number[]
   onReady?: (event: GridReadyEvent<ReviewLineType>) => void
-  translatedStringSearchResult: StringSearchResult | null
   matchLanguage: MatchLanguages
   comments: z.infer<ReturnType<(typeof TRANSLATION_API_URLS)['TRANSLATIONS']['LIST_COMMENTS']>['responseSchema']>
   onSendComment: (params: { body: string; line: number; inReplyTo?: number }) => void
@@ -27,9 +27,16 @@ type TranslationGridProps = {
   showAllLines?: boolean
   onLineEdited: (event: NewValueParams<ReviewLineType, any>) => void
   onCellFocused: (event: CellFocusedEvent<ReviewLineType, any>) => void
+  onRowDataChanged: (value: ReviewLineType[]) => void
+  stringSearchResult: StringSearchResult | null
 }
 
 const RESOLVED_COMMENT = '[RESOLVED]'
+
+const LANGUAGE_COLUMNS = {
+  en: 'original',
+  fr: 'newTranslated'
+} as const
 
 export const ReviewTranslationGrid = ({
   filteredLines,
@@ -43,7 +50,10 @@ export const ReviewTranslationGrid = ({
   editable,
   onLineEdited,
   onCellFocused,
-  showAllLines
+  showAllLines,
+  onRowDataChanged,
+  stringSearchResult,
+  matchLanguage
 }: TranslationGridProps) => {
   const gridApi = useRef<GridApi | null>(null)
   const [selectedChangedLine, setSelectedChangedLine] = useState<ReviewLineType | null>(null)
@@ -84,19 +94,66 @@ export const ReviewTranslationGrid = ({
     else setPinnedPosition('None')
   }
 
-  const computeLineNumbersToShow = () => {
-    // The boolean value is true if the line has been changed in the PR
+  const lineNumbersToShow = useMemo(() => {
     const map = new Map<number, boolean>()
     for (const lineNumber of changedLineNumbers) map.set(lineNumber, true)
     return map
-  }
+  }, [changedLineNumbers])
 
-  const lineNumbersToShow = computeLineNumbersToShow()
+  const shouldOnlyShowChangedLines = selectedChangedLine === null && !showAllLines
+
+  const rowData = useMemo(() => {
+    return shouldOnlyShowChangedLines
+      ? filteredLines.filter((line) => lineNumbersToShow.has(line.lineNumber))
+      : filteredLines
+  }, [shouldOnlyShowChangedLines, filteredLines, lineNumbersToShow])
+
+  useEffect(() => {
+    onRowDataChanged(rowData)
+  }, [shouldOnlyShowChangedLines, filteredLines, lineNumbersToShow])
 
   const customCellRenderer = (params: ICellRendererParams) => {
     const cellText: string = params.value
 
-    if (params.node.rowIndex == null || !params.data || params.colDef?.field !== 'newTranslated') return cellText
+    if (params.node.rowIndex == null || !params.data || params.colDef?.field === 'oldTranslated') return cellText
+
+    const rowIndex = params.node.rowIndex
+
+    const rowMatches = stringSearchResult?.matches.get(rowIndex)
+
+    const pattern = stringSearchResult?.pattern
+    const parts =
+      params.colDef?.field === LANGUAGE_COLUMNS[matchLanguage] && pattern && rowMatches
+        ? getParts(rowMatches, pattern.length, cellText.length)
+        : []
+
+    const getMatchColor = (rowIndex: number, charIndex: number) => {
+      return stringSearchResult?.selectedMatch?.rowIndex == rowIndex &&
+        stringSearchResult?.selectedMatch?.charIndex == charIndex
+        ? 'orange'
+        : 'yellow'
+    }
+
+    const textWithMatches =
+      parts.length > 0 ? (
+        <span>
+          {parts.map(({ start, end, isMatch }, i) => {
+            const part = cellText.slice(start, end)
+            if (isMatch) {
+              return (
+                <span key={i} style={{ backgroundColor: getMatchColor(rowIndex, start), color: 'black' }}>
+                  {part}
+                </span>
+              )
+            }
+            return <span key={i}>{part}</span>
+          })}
+        </span>
+      ) : (
+        <p className="block h-full leading-6">{cellText}</p>
+      )
+
+    if (params.colDef?.field === 'original') return textWithMatches
 
     const lineComments = comments.filter((comment) => comment.line - 1 === params.data.lineNumber)
     const isResolved = lineComments[lineComments.length - 1]?.body === RESOLVED_COMMENT
@@ -104,7 +161,7 @@ export const ReviewTranslationGrid = ({
     return (
       <div className="w-full">
         <div className="flex items-center justify-between w-full">
-          <p className="block h-full leading-6">{cellText}</p>
+          {textWithMatches}
           {lineNumbersToShow.get(params.data.lineNumber) === true && (
             <div className="flex gap-1 h-full items-center">
               {(isResolved || lineComments.length === 0) && (
@@ -259,11 +316,7 @@ export const ReviewTranslationGrid = ({
       theme={myTheme}
       headerHeight={36}
       className="w-full max-w-[1700px] relative h-[calc(100svh-200px)]"
-      rowData={
-        selectedChangedLine !== null || showAllLines
-          ? filteredLines
-          : filteredLines.filter((line) => lineNumbersToShow.has(line.lineNumber))
-      }
+      rowData={rowData}
       rowClassRules={{
         'ag-cell-changed': ({ data }) => !!data && changedLineNumbers.includes(data.lineNumber),
         'ag-cell-conflict': ({ data }) => !!data && conflictedLinesNumber.includes(data.lineNumber)

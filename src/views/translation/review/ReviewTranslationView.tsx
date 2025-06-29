@@ -18,6 +18,8 @@ import { store, STORE_KEYS, StoreUserInfos } from '../../../store/store'
 import { z } from 'zod'
 import { makeLineKey } from '../edit/changes'
 import { DialogVisualizer } from '../../../components/DialogVisualizer/DialogVisualizer'
+import { ReviewStringSearch } from './ReviewStringSearch'
+import { isRowVisible } from '../isCellVisible'
 
 export type ReviewFileType = {
   name: string
@@ -151,11 +153,12 @@ export const ReviewTranslationView = () => {
   const error =
     branchTranslationFilesError ?? masterTranslationFilesError ?? translationFilesAtCreationError ?? commentsError
 
-  const [stringSearchResult] = useState<StringSearchResult | null>(null)
-  const [matchLanguage] = useState<MatchLanguages>('fr')
-  const [_, setGridApi] = useState<GridApi<ReviewLineType> | null>(null)
+  const [stringSearchResult, setStringSearchResult] = useState<StringSearchResult | null>(null)
+  const [matchLanguage, setMatchLanguage] = useState<MatchLanguages>('fr')
+  const [gridApi, setGridApi] = useState<GridApi<ReviewLineType> | null>(null)
   const [selectedFile, setSelectedFile] = useState<ReviewFileType | null>(null)
   const focusedCellRef = useRef<string | null>(null)
+  const [rowData, setRowData] = useState<ReviewLineType[]>([])
 
   const gridFiles = useMemo(() => {
     if (!branchTranslationFiles || !translationFilesAtCreation || !masterTranslationFiles) return undefined
@@ -278,10 +281,24 @@ export const ReviewTranslationView = () => {
         {isError && <div>Erreur lors du téléchargement des fichiers {error?.message}</div>}
         <DialogVisualizer getDialog={() => focusedCellRef.current ?? ''} />
         {filteredLines && selectedFileContents && selectedFile && (
+          <ReviewStringSearch
+            filteredLines={rowData}
+            matchLanguage={matchLanguage}
+            onMatchChanged={(result) => {
+              setStringSearchResult(result)
+              if (!result || !result.selectedMatch || !gridApi) return
+              const rowIndex = result.selectedMatch.rowIndex
+              if (!isRowVisible(gridApi, rowData[rowIndex].lineNumber)) gridApi.ensureIndexVisible(rowIndex, 'middle')
+              gridApi.refreshCells({ force: true })
+            }}
+            onMatchLanguageChanged={setMatchLanguage}
+          />
+        )}
+        {filteredLines && selectedFileContents && selectedFile && (
           <div className="w-full h-full pb-4 flex flex-row justify-center">
             <ReviewTranslationGrid
               onCellFocused={(e) => {
-                if (!filteredLines || !e.rowIndex || typeof e.column !== 'object') return
+                if (!filteredLines || e.rowIndex == null || typeof e.column !== 'object') return
 
                 const value = e.api.getDisplayedRowAtIndex(e.rowIndex)?.data?.[
                   (e.column?.getColId() as keyof ReviewLineType) ?? 'newTranslated'
@@ -316,8 +333,9 @@ export const ReviewTranslationView = () => {
                 })
               }}
               onDeleteCommentClicked={(params) => deleteComments.mutate(params)}
-              translatedStringSearchResult={stringSearchResult}
               matchLanguage={matchLanguage}
+              onRowDataChanged={setRowData}
+              stringSearchResult={stringSearchResult}
             />
           </div>
         )}
