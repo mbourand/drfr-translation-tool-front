@@ -89,7 +89,10 @@ const getTranslations = async () => {
       .filter((pr) => pr.state === 'open' && !hasWipLabel(pr))
       .map(translationMapper)
       .filter((pr) => !isPrReviewed(pr.approvals, pr.requestedChanges)),
-    reviewedTranslations: prs.map(translationMapper).filter((pr) => isPrReviewed(pr.approvals, pr.requestedChanges)),
+    reviewedTranslations: prs
+      .filter((pr) => pr.state === 'open')
+      .map(translationMapper)
+      .filter((pr) => isPrReviewed(pr.approvals, pr.requestedChanges)),
     doneTranslations: prs.filter((pr) => !!pr.merged_at && pr.state === 'closed').map(translationMapper)
   }
 }
