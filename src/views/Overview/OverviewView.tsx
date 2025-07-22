@@ -9,29 +9,63 @@ import { CreateTranslationModal } from './CreateTranslationModal'
 import { TranslationType } from '../../routes/translation/schemas'
 import { TRANSLATION_APP_PAGES } from '../../routes/pages/routes'
 import { useNavigate } from 'react-router'
+import { z } from 'zod'
 
 const TRANSLATION_LABEL = 'Traduction'
 const WIP_LABEL = 'En cours'
-const REVIEW_LABEL = 'Correction'
-const REVIEWED_LABEL = 'Relecture effectuée'
-const APPROVED_LABEL = 'Approuvée'
 
-const mapPRToTranslation = (pr: TranslationType, isYours: boolean) => ({
-  id: pr.id,
-  title: pr.title,
-  author: pr.user.login,
-  authorAvatar: pr.user.avatar_url,
-  isApproved: pr.labels.some((label) => label.name === APPROVED_LABEL),
-  href:
-    pr.labels.some((label) => label.name === WIP_LABEL) && pr.state === 'open' && isYours
-      ? TRANSLATION_APP_PAGES.TRANSLATION.EDIT(pr.head.ref.toString(), pr.title.toString())
-      : TRANSLATION_APP_PAGES.TRANSLATION.REVIEW(
-          pr.head.ref.toString(),
-          pr.title.toString(),
-          isYours,
-          pr.labels.some((label) => label.name === REVIEWED_LABEL)
-        )
-})
+const APPROVED_BY_PREFIX = '[APPROVED_BY]'
+const APPROVED_BY_SUFFIX = '[/APPROVED_BY]'
+const REQUESTED_CHANGES_PREFIX = '[REQUESTED_CHANGES]'
+const REQUESTED_CHANGES_SUFFIX = '[/REQUESTED_CHANGES]'
+
+const getReviews = (type: 'approvals' | 'change_requested', pr: TranslationType) => {
+  if (!pr.body) return []
+
+  const prefixToUse = type === 'approvals' ? APPROVED_BY_PREFIX : REQUESTED_CHANGES_PREFIX
+  const suffixToUse = type === 'approvals' ? APPROVED_BY_SUFFIX : REQUESTED_CHANGES_SUFFIX
+
+  const startIndex = pr.body.indexOf(prefixToUse)
+  const endIndex = pr.body.indexOf(suffixToUse)
+  if (startIndex === -1 || endIndex === -1 || startIndex >= endIndex) return []
+
+  const reviewStr = pr.body.slice(startIndex + prefixToUse.length, endIndex)
+
+  try {
+    const review = z.array(z.string()).parse(JSON.parse(reviewStr || '[]'))
+    return review
+  } catch (e) {
+    console.log(e)
+    return []
+  }
+}
+
+const isPrReviewed = (approvals: string[], requestedChanges: string[]) => {
+  return approvals.length >= 2 || requestedChanges.length > 0
+}
+
+const mapPRToTranslation = (pr: TranslationType, isYours: boolean) => {
+  const approvals = getReviews('approvals', pr)
+  const requestedChanges = getReviews('change_requested', pr)
+
+  return {
+    id: pr.id,
+    title: pr.title,
+    author: pr.user.login,
+    authorAvatar: pr.user.avatar_url,
+    approvals,
+    requestedChanges,
+    href:
+      pr.labels.some((label) => label.name === WIP_LABEL) && pr.state === 'open' && isYours
+        ? TRANSLATION_APP_PAGES.TRANSLATION.EDIT(pr.head.ref.toString(), pr.title.toString())
+        : TRANSLATION_APP_PAGES.TRANSLATION.REVIEW(
+            pr.head.ref.toString(),
+            pr.title.toString(),
+            isYours,
+            isPrReviewed(approvals, requestedChanges)
+          )
+  }
+}
 
 const getTranslations = async () => {
   const userInfos = await store.get<StoreUserInfos>(STORE_KEYS.USER_INFOS)
@@ -46,19 +80,16 @@ const getTranslations = async () => {
 
   const translationMapper = (pr: TranslationType) => mapPRToTranslation(pr, pr.user.id === userInfos.id)
 
+  const hasWipLabel = (pr: TranslationType) => pr.labels.some((label) => label.name === WIP_LABEL)
+
   return {
     yourTranslations: prs.filter((pr) => pr.user.id === userInfos.id && pr.state === 'open').map(translationMapper),
-    wipTranslations: prs
-      .filter((pr) => pr.labels.some((label) => label.name === WIP_LABEL && pr.state === 'open'))
-      .map(translationMapper),
+    wipTranslations: prs.filter((pr) => hasWipLabel(pr) && pr.state === 'open').map(translationMapper),
     waitingForReviewTranslations: prs
-      .filter((pr) => pr.labels.some((label) => label.name === REVIEW_LABEL) && pr.state === 'open')
-      .map(translationMapper),
-    reviewedTranslations: prs
-      .filter(
-        (pr) => pr.labels.some((label) => [REVIEWED_LABEL, APPROVED_LABEL].includes(label.name)) && pr.state === 'open'
-      )
-      .map(translationMapper),
+      .filter((pr) => pr.state === 'open' && !hasWipLabel(pr))
+      .map(translationMapper)
+      .filter((pr) => !isPrReviewed(pr.approvals, pr.requestedChanges)),
+    reviewedTranslations: prs.map(translationMapper).filter((pr) => isPrReviewed(pr.approvals, pr.requestedChanges)),
     doneTranslations: prs.filter((pr) => !!pr.merged_at && pr.state === 'closed').map(translationMapper)
   }
 }

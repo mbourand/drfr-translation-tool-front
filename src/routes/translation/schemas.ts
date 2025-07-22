@@ -35,7 +35,8 @@ export const TranslationSchema = z
       })
       .passthrough(),
     state: z.string(),
-    merged_at: z.string().nullish()
+    merged_at: z.string().nullish(),
+    body: z.string().nullish()
   })
   .passthrough()
 
