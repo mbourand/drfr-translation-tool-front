@@ -1,3 +1,4 @@
+import { store, STORE_KEYS } from '../store/store'
 import { SunIcon } from './icons/SunIcon'
 
 const THEMES = [
@@ -51,7 +52,10 @@ export const ThemeButton = () => {
         {THEMES.map((theme) => (
           <li key={theme.value}>
             <input
-              onClick={() => document.querySelector('html')?.setAttribute('data-theme', theme.value)}
+              onClick={async () => {
+                document.querySelector('html')?.setAttribute('data-theme', theme.value)
+                await store.set(STORE_KEYS.THEME, theme.value)
+              }}
               type="radio"
               name="theme-dropdown"
               className="theme-controller w-full btn btn-sm btn-block btn-ghost justify-start"
