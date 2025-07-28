@@ -6,7 +6,6 @@ import { ApproveButtonButton } from './ApproveButton'
 import { ReviewFileType } from './ReviewTranslationView'
 import { makeLineKey } from '../edit/changes'
 import { SaveChangesButton } from '../edit/SidePanel/SaveChangesButton'
-import { LineType } from '../edit/types'
 import { DifferenceIcon } from '../../../components/icons/DifferenceIcon'
 import { AskForChangesButton } from './AskForChangesButton'
 import { SubmitToReviewButton } from '../edit/SidePanel/SubmitToReviewButton'
@@ -30,6 +29,7 @@ type SidePanelProps = {
   branch: string
   isYours: boolean
   isReviewed: boolean
+  onSaveSuccess: () => void
 }
 
 export const SidePanel = ({
@@ -37,6 +37,7 @@ export const SidePanel = ({
   isYours,
   editedLines,
   onSelected,
+  onSaveSuccess,
   selected,
   title,
   isReviewed,
@@ -49,18 +50,11 @@ export const SidePanel = ({
       return {
         pathsInGameFolder: file.pathsInGameFolder,
         content: file.lines
-          .map((line) => editedLines.get(makeLineKey(file.translatedPath, line.lineNumber)) ?? line.newTranslated)
+          .map((line) => editedLines.get(makeLineKey(file.translatedPath, line.lineNumber)) ?? line.translated)
           .join('\n'),
         pathInGitFolder: file.translatedPath
       }
     })
-  }, [files, editedLines])
-
-  const filesForSavingChanges = useMemo(() => {
-    return files.map((f) => ({
-      ...f,
-      lines: f.lines.map((l) => ({ ...l, translated: l.newTranslated } as LineType))
-    }))
   }, [files, editedLines])
 
   return (
@@ -112,7 +106,9 @@ export const SidePanel = ({
             <div className="mt-auto flex flex-col gap-3">
               <LaunchGameButton files={filesForLaunchingGame} />
               {isYours && isReviewed && <SubmitToReviewButton branch={branch} />}
-              {isYours && <SaveChangesButton branch={branch} files={filesForSavingChanges} changes={editedLines} />}
+              {isYours && (
+                <SaveChangesButton branch={branch} files={files} changes={editedLines} onSaveSuccess={onSaveSuccess} />
+              )}
               {!isYours && <AskForChangesButton branch={branch} />}
               {!isYours && <ApproveButtonButton branch={branch} />}
             </div>

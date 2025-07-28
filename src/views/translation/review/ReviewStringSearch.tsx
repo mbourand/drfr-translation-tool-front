@@ -18,7 +18,7 @@ export const ReviewStringSearch = ({
   onMatchLanguageChanged
 }: ReviewStringSearchProps) => {
   const stringSearch = useStringSearch({
-    lines: matchLanguage === 'fr' ? filteredLines.map((l) => l.newTranslated) : filteredLines.map((l) => l.original),
+    lines: matchLanguage === 'fr' ? filteredLines.map((l) => l.translated) : filteredLines.map((l) => l.original),
     onMatchChanged
   })
 

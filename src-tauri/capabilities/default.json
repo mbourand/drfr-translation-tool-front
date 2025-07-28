@@ -8,6 +8,8 @@
     "oauth:allow-start",
     "core:default",
     "opener:default",
+    "core:window:allow-close",
+    "core:window:allow-destroy",
     {
       "identifier": "http:default",
       "allow": [

@@ -13,6 +13,7 @@ import { isTechnicalString } from '../../../modules/game/strings'
 import { useTranslationFiles } from '../../../hooks/useTranslationFiles'
 import { isRowVisible } from '../isCellVisible'
 import { DialogVisualizer } from '../../../components/DialogVisualizer/DialogVisualizer'
+import { UnsavedChangesModal } from '../review/UnsavedChangesModal'
 
 export const EditTranslationView = () => {
   const branch = useParams().branch
@@ -28,6 +29,8 @@ export const EditTranslationView = () => {
   const [matchLanguage, setMatchLanguage] = useState<MatchLanguages>('fr')
 
   const focusedCellRef = useRef<string | null>(null)
+
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
   const {
     translationFiles: { data: files, isPending, isError, error }
@@ -69,6 +72,7 @@ export const EditTranslationView = () => {
         selected={selectedFile}
         branch={branch}
         changes={changedLines}
+        onSaveSuccess={() => setHasUnsavedChanges(false)}
       />
       <div className="flex flex-col items-center w-full px-4">
         <div className="flex flex-row w-full items-center mb-4 pt-2">
@@ -105,6 +109,7 @@ export const EditTranslationView = () => {
                   else prev.set(key, newValue)
                   return new Map(prev)
                 })
+                setHasUnsavedChanges(true)
               }}
               onCellFocused={(e) => {
                 if (!filteredLines || e.rowIndex == null || typeof e.column !== 'object') return
@@ -123,6 +128,15 @@ export const EditTranslationView = () => {
           </div>
         )}
       </div>
+      {branch && files && (
+        <UnsavedChangesModal
+          hasUnsavedChanges={hasUnsavedChanges}
+          onSaveSuccess={() => setHasUnsavedChanges(false)}
+          changes={changedLines}
+          files={files}
+          branch={branch}
+        />
+      )}
     </div>
   )
 }

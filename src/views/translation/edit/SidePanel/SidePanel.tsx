@@ -22,9 +22,18 @@ type SidePanelProps = {
   selected: FileType | null
   branch: string
   changes: Map<string, string>
+  onSaveSuccess: () => void
 }
 
-export const SidePanel = ({ categories, onSelected, selected, title, branch, changes }: SidePanelProps) => {
+export const SidePanel = ({
+  categories,
+  onSelected,
+  onSaveSuccess,
+  selected,
+  title,
+  branch,
+  changes
+}: SidePanelProps) => {
   const files = useMemo(() => Object.values(categories).flat(), [categories])
 
   const filesForLaunchingGame = useMemo(() => {
@@ -83,7 +92,7 @@ export const SidePanel = ({ categories, onSelected, selected, title, branch, cha
             <div className="mt-auto flex flex-col gap-3">
               <LaunchGameButton files={filesForLaunchingGame} />
               <SubmitToReviewButton branch={branch} />
-              <SaveChangesButton branch={branch} changes={changes} files={files} />
+              <SaveChangesButton branch={branch} changes={changes} files={files} onSaveSuccess={onSaveSuccess} />
             </div>
           </ul>
         </div>

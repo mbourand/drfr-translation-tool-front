@@ -20,6 +20,7 @@ import { makeLineKey } from '../edit/changes'
 import { DialogVisualizer } from '../../../components/DialogVisualizer/DialogVisualizer'
 import { ReviewStringSearch } from './ReviewStringSearch'
 import { isRowVisible } from '../isCellVisible'
+import { UnsavedChangesModal } from './UnsavedChangesModal'
 
 export type ReviewFileType = {
   name: string
@@ -38,6 +39,8 @@ export const ReviewTranslationView = () => {
   const isYours = searchParams.get('isYours') === 'true'
   const isReviewed = searchParams.get('isReviewed') === 'true'
   const prName = searchParams.get('name') ?? ''
+
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
 
   const {
     translationFiles: {
@@ -179,7 +182,7 @@ export const ReviewTranslationView = () => {
           lineNumber: line.lineNumber,
           original: line.original,
           oldTranslated: masterFile.lines[j].translated,
-          newTranslated: line.translated
+          translated: line.translated
         })
         if (!hasChanges && line.translated !== atCreationFile.lines[j].translated) {
           hasChanges = true
@@ -229,8 +232,8 @@ export const ReviewTranslationView = () => {
           (masterLine) => masterLine.lineNumber - line.lineNumber
         )
         return (
-          line.oldTranslated !== line.newTranslated &&
-          line.newTranslated !== fileFromMasterAtCreation.lines[indexInMasterLines].translated
+          line.oldTranslated !== line.translated &&
+          line.translated !== fileFromMasterAtCreation.lines[indexInMasterLines].translated
         )
       })
       .map((line) => line.lineNumber)
@@ -251,7 +254,7 @@ export const ReviewTranslationView = () => {
           (masterLine) => masterLine.lineNumber - line.lineNumber
         )
         return (
-          line.oldTranslated !== line.newTranslated &&
+          line.oldTranslated !== line.translated &&
           line.oldTranslated !== fileFromMasterAtCreation.lines[indexInMasterLines].translated
         )
       })
@@ -269,6 +272,7 @@ export const ReviewTranslationView = () => {
         selected={selectedFile}
         isReviewed={isReviewed}
         isYours={isYours}
+        onSaveSuccess={() => setHasUnsavedChanges(false)}
       />
       <div className="flex flex-col items-center w-full px-4">
         <div className="flex flex-row w-full items-center mb-4 pt-2">
@@ -301,7 +305,7 @@ export const ReviewTranslationView = () => {
                 if (!filteredLines || e.rowIndex == null || typeof e.column !== 'object') return
 
                 const value = e.api.getDisplayedRowAtIndex(e.rowIndex)?.data?.[
-                  (e.column?.getColId() as keyof ReviewLineType) ?? 'newTranslated'
+                  (e.column?.getColId() as keyof ReviewLineType) ?? 'translated'
                 ]
                 if (typeof value !== 'string') return
 
@@ -315,6 +319,7 @@ export const ReviewTranslationView = () => {
                   newEditedLines.set(key, newValue)
                   return newEditedLines
                 })
+                setHasUnsavedChanges(true)
               }}
               userLogin={userLogin.data ?? ''}
               comments={comments?.filter((comment) => comment.path === selectedFile.translatedPath) ?? []}
@@ -340,6 +345,15 @@ export const ReviewTranslationView = () => {
           </div>
         )}
       </div>
+      {branch && gridFiles && (
+        <UnsavedChangesModal
+          hasUnsavedChanges={hasUnsavedChanges}
+          onSaveSuccess={() => setHasUnsavedChanges(false)}
+          changes={editedLines}
+          files={gridFiles}
+          branch={branch}
+        />
+      )}
     </div>
   )
 }
