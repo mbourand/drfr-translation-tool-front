@@ -7,9 +7,9 @@ type ModalProps = {
   label: string
   className?: string
   children: ReactNode
-  actions: ReactNode
+  actions?: ReactNode
   isVisible: boolean
-  onClose: () => void
+  onClose?: () => void
 }
 
 export const Modal = (props: ModalProps) => {
@@ -26,7 +26,7 @@ export const Modal = (props: ModalProps) => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && props.isVisible) {
         event.preventDefault()
-        props.onClose()
+        props.onClose?.()
       }
     }
 

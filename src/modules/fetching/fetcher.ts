@@ -24,12 +24,9 @@ export const fetchData = async <Route extends APIRoute>(
     body: 'body' in params ? JSON.stringify(params.body) : undefined
   })
 
-  console.log(response.ok)
-
   if (!response.ok) throw new Error(`Server sent an error : ${response.status} ${response.statusText}`)
 
   const unsafeData = await response.json()
-  console.log(unsafeData)
   const data = params.route.responseSchema.parse(unsafeData)
   return data
 }

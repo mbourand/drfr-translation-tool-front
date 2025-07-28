@@ -35,7 +35,7 @@ const RESOLVED_COMMENT = '[RESOLVED]'
 
 const LANGUAGE_COLUMNS = {
   en: 'original',
-  fr: 'newTranslated'
+  fr: 'translated'
 } as const
 
 export const ReviewTranslationGrid = ({
@@ -350,7 +350,7 @@ export const ReviewTranslationGrid = ({
           cellRenderer: customCellRenderer
         },
         {
-          field: 'newTranslated',
+          field: 'translated',
           headerName: 'Nouvelle version française',
           autoHeight: true,
           wrapText: true,

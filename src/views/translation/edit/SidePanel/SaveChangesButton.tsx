@@ -6,9 +6,10 @@ type SaveChangesButtonProps = {
   branch: string
   changes: Map<string, string>
   files: FileType[]
+  onSaveSuccess?: () => void
 }
 
-export const SaveChangesButton = ({ branch, changes, files }: SaveChangesButtonProps) => {
+export const SaveChangesButton = ({ branch, changes, files, onSaveSuccess }: SaveChangesButtonProps) => {
   const [isSaveModalVisible, setIsSaveModalVisible] = useState(false)
 
   useEffect(() => {
@@ -38,6 +39,7 @@ export const SaveChangesButton = ({ branch, changes, files }: SaveChangesButtonP
         branch={branch}
         files={files}
         changes={changes}
+        onSaveSuccess={onSaveSuccess}
       />
     </>
   )
