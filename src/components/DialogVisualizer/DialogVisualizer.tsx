@@ -26,7 +26,7 @@ const BOX_CONFIGS = {
     maxCharactersWithHead: 26,
     characterWidth: 17.8,
     maxLines: 3,
-    lineHeight: 40,
+    lineHeight: 44,
     hasAsteriskHandling: true
   },
   legendoftenna: {
@@ -73,10 +73,15 @@ type DialogVisualizerProps = {
 
 export const DialogVisualizer = ({ getDialog }: DialogVisualizerProps) => {
   const [dialog, setDialog] = useState(getDialog())
+  const [internalDialog, setInternalDialog] = useState(dialog)
   const [isVisible, setIsVisible] = useState(false)
   const [boxKind, setBoxKind] = useState<BoxKind>('classic')
 
   const config = BOX_CONFIGS[boxKind]
+
+  useEffect(() => {
+    setInternalDialog(dialog)
+  }, [dialog])
 
   useInterval(() => setDialog(getDialog()), 100)
 
@@ -98,13 +103,13 @@ export const DialogVisualizer = ({ getDialog }: DialogVisualizerProps) => {
     }
   }, [])
 
-  const isHeadDialog = /^\\[A-Z][A-Za-z0-9]/.test(dialog)
+  const isHeadDialog = /^\\[A-Z][A-Za-z0-9]/.test(internalDialog)
 
-  const sanitizedDialog = dialog
+  const sanitizedDialog = internalDialog
     .replace(/\[RETOUR A LA LIGNE\]/g, '&')
     .replace(/\r/g, '')
     .replace(/\^\d/g, '')
-    .replace(/\\c[A-Z]/g, '')
+    .replace(/\\c[A-Z0-9]/g, '')
     .replace(/^\\[A-Z][a-zA-Z0-9]/g, '')
     .replace(/\/%?$/g, '')
 
@@ -189,26 +194,34 @@ export const DialogVisualizer = ({ getDialog }: DialogVisualizerProps) => {
     <>
       <div className="fixed z-20 bottom-4 right-4">
         {isVisible && (
-          <div
-            className="font-dtm-mono text-[28px] bg-black leading-10 relative outline-white outline-5 px-4 py-2 overflow-hidden text-white whitespace-nowrap"
-            style={{
-              width:
-                config.maxLines !== Infinity ? config.characterWidth * config.maxCharactersPerLine + 32 : undefined, // 32 for padding
-              height: config.maxLines !== Infinity ? config.lineHeight * config.maxLines + 16 : undefined,
-              paddingLeft: isHeadDialog
-                ? (config.maxCharactersPerLine - config.maxCharactersWithHead) * config.characterWidth + 16
-                : undefined
-            }}
-          >
-            {lines.map((line, index) => (
-              <>
-                <span key={index}>
-                  {config.hasAsteriskHandling && !line.startsWith('*') && <>&nbsp;&nbsp;</>}
-                  {line.replace(/\s/g, '\u00A0')}
-                </span>
-                <br />
-              </>
-            ))}
+          <div className="join join-vertical">
+            <div
+              className="font-dtm-mono text-[28px] bg-black leading-10 relative border-white border-5 px-4 py-2 overflow-hidden text-white whitespace-nowrap join-item"
+              style={{
+                width:
+                  config.maxLines !== Infinity ? config.characterWidth * config.maxCharactersPerLine + 32 : undefined, // 32 for padding
+                height: config.maxLines !== Infinity ? config.lineHeight * config.maxLines + 16 : undefined,
+                paddingLeft: isHeadDialog
+                  ? (config.maxCharactersPerLine - config.maxCharactersWithHead) * config.characterWidth + 16
+                  : undefined
+              }}
+            >
+              {lines.map((line, index) => (
+                <>
+                  <span key={index}>
+                    {config.hasAsteriskHandling && !line.startsWith('*') && <>&nbsp;&nbsp;</>}
+                    {line.replace(/\s/g, '\u00A0')}
+                  </span>
+                  <br />
+                </>
+              ))}
+            </div>
+            <input
+              className="input join-item w-full !outline-none"
+              type="text"
+              value={internalDialog}
+              onChange={(e) => setInternalDialog(e.target.value)}
+            />
           </div>
         )}
         <button
@@ -221,26 +234,28 @@ export const DialogVisualizer = ({ getDialog }: DialogVisualizerProps) => {
           {isVisible ? <PreviewOffIcon /> : <PreviewIcon />}
         </button>
         {isVisible && (
-          <details ref={selectRef} className="dropdown absolute z-100 top-0 left-0 -translate-x-1/2 -translate-y-1/2">
-            <summary className="btn btn-circle btn-soft btn-sm">
-              <MoreHorizIcon />
-            </summary>
-            <ul className="menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm top-0 -translate-y-[calc(100%+4px)]">
-              {(Object.keys(BOX_CONFIGS) as BoxKind[]).map((kind) => (
-                <li key={kind}>
-                  <a
-                    className={twMerge(boxKind === kind && 'bg-primary text-primary-content')}
-                    onClick={() => {
-                      selectRef.current?.removeAttribute('open')
-                      setBoxKind(kind)
-                    }}
-                  >
-                    {BOX_CONFIGS[kind].name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </details>
+          <div>
+            <details ref={selectRef} className="dropdown absolute z-100 top-0 left-0 -translate-x-1/2 -translate-y-1/2">
+              <summary className="btn btn-circle btn-soft btn-sm">
+                <MoreHorizIcon />
+              </summary>
+              <ul className="menu dropdown-content bg-base-100 rounded-box z-1 w-52 p-2 shadow-sm top-0 -translate-y-[calc(100%+4px)]">
+                {(Object.keys(BOX_CONFIGS) as BoxKind[]).map((kind) => (
+                  <li key={kind}>
+                    <a
+                      className={twMerge(boxKind === kind && 'bg-primary text-primary-content')}
+                      onClick={() => {
+                        selectRef.current?.removeAttribute('open')
+                        setBoxKind(kind)
+                      }}
+                    >
+                      {BOX_CONFIGS[kind].name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          </div>
         )}
       </div>
     </>
