@@ -7,6 +7,7 @@ import { useState } from 'react'
 import { fetchData } from '../../../../modules/fetching/fetcher'
 import { STATIC_ROUTES } from '../../../../routes/static/routes'
 import { ENV } from '../../../../Env'
+import { repairGameFiles } from '../../../../modules/game/repair'
 
 type LaunchGameModalProps = {
   isVisible: boolean
@@ -86,6 +87,19 @@ export const LaunchGameModal = ({ onClose, isVisible, files }: LaunchGameModalPr
         <>
           <button className="float-right btn btn-ghost" onClick={onClose}>
             Annuler
+          </button>
+          <button
+            className="float-right btn btn-soft"
+            onClick={async () => {
+              if (gameFolder) {
+                await repairGameFiles(gameFolder)
+                alert(
+                  'Les fichiers de cache de la traduction ont été supprimés. Vérifiez les fichiers du jeu sur steam, puis réessayez de lancer le jeu.'
+                )
+              }
+            }}
+          >
+            Réparer
           </button>
           <button
             disabled={!gameFolder || !utmtCliFolder}
