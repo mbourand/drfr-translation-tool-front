@@ -7,7 +7,7 @@ import { useInterval } from 'react-use'
 
 const FORCED_LINE_BREAK_CHAR = ['&', '#']
 
-type BoxKind = 'legendoftenna' | 'classic' | 'shoptalk' | 'shop' | 'battle'
+type BoxKind = 'legendoftenna' | 'classic' | 'shoptalk' | 'shop' | 'battle' | 'item'
 
 type BoxType = {
   name: string
@@ -17,6 +17,7 @@ type BoxType = {
   characterWidth: number
   lineHeight: number
   hasAsteriskHandling?: boolean
+  autoLineBreak: boolean
 }
 
 const BOX_CONFIGS = {
@@ -27,7 +28,8 @@ const BOX_CONFIGS = {
     characterWidth: 17.8,
     maxLines: 3,
     lineHeight: 44,
-    hasAsteriskHandling: true
+    hasAsteriskHandling: true,
+    autoLineBreak: true
   },
   legendoftenna: {
     name: 'The Legend of Tenna',
@@ -36,7 +38,8 @@ const BOX_CONFIGS = {
     characterWidth: 17.8,
     maxLines: 3,
     lineHeight: 44,
-    hasAsteriskHandling: false
+    hasAsteriskHandling: false,
+    autoLineBreak: true
   },
   shoptalk: {
     name: 'Shop pleine taille',
@@ -45,7 +48,8 @@ const BOX_CONFIGS = {
     characterWidth: 17.8,
     maxLines: 5,
     lineHeight: 44,
-    hasAsteriskHandling: true
+    hasAsteriskHandling: true,
+    autoLineBreak: true
   },
   shop: {
     name: 'Shop partie gauche',
@@ -54,7 +58,18 @@ const BOX_CONFIGS = {
     characterWidth: 17.8,
     maxLines: 5,
     lineHeight: 44,
-    hasAsteriskHandling: true
+    hasAsteriskHandling: true,
+    autoLineBreak: true
+  },
+  item: {
+    name: "Description d'item",
+    maxCharactersPerLine: 49,
+    maxCharactersWithHead: 49,
+    characterWidth: 16.7,
+    maxLines: 2,
+    lineHeight: 44,
+    hasAsteriskHandling: false,
+    autoLineBreak: false
   },
   battle: {
     name: 'Combat',
@@ -63,7 +78,8 @@ const BOX_CONFIGS = {
     characterWidth: 17.8,
     maxLines: Infinity,
     lineHeight: 44,
-    hasAsteriskHandling: false
+    hasAsteriskHandling: false,
+    autoLineBreak: false
   }
 } as const satisfies Record<BoxKind, BoxType>
 
@@ -125,19 +141,19 @@ export const DialogVisualizer = ({ getDialog }: DialogVisualizerProps) => {
 
       const char = sanitizedDialog[i]
 
-      if (currentLine.length + currentWord.length > maxCharactersThisLine) {
-        if (currentLine) lines.push(currentLine)
-        currentLine = ''
-        currentWord += char
-        continue
-      }
-
       if (FORCED_LINE_BREAK_CHAR.includes(char)) {
         if (currentLine === '') currentLine = currentWord.replace(/^\s(\S)/, '$1')
         else currentLine += currentWord
         lines.push(currentLine)
         currentLine = ''
         currentWord = ''
+        continue
+      }
+
+      if (currentLine.length + currentWord.length > maxCharactersThisLine && config.autoLineBreak) {
+        if (currentLine) lines.push(currentLine)
+        currentLine = ''
+        currentWord += char
         continue
       }
 
@@ -156,7 +172,7 @@ export const DialogVisualizer = ({ getDialog }: DialogVisualizerProps) => {
       const maxCharactersThisLine =
         maxCharactersPerLineThisDialog - (config.hasAsteriskHandling && !hasLeadingAsterisk ? 2 : 0)
 
-      if (currentLine.length + currentWord.length > maxCharactersThisLine) {
+      if (currentLine.length + currentWord.length > maxCharactersThisLine && config.autoLineBreak) {
         lines.push(currentLine)
         currentLine = ''
       }
@@ -169,7 +185,7 @@ export const DialogVisualizer = ({ getDialog }: DialogVisualizerProps) => {
     if (currentLine) lines.push(currentLine)
 
     return lines
-  }, [sanitizedDialog, boxKind])
+  }, [sanitizedDialog, boxKind, config])
 
   const selectRef = useRef<HTMLDetailsElement>(null)
 
