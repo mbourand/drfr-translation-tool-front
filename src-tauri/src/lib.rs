@@ -25,6 +25,13 @@ async fn import_strings(
         chapter.to_string()
     );
 
+	println!(
+		"Importing strings for chapter {} using scripts: {}, {}",
+		chapter.to_string(),
+		import_script_path,
+		debug_mode_script_path
+	);
+
     if !PathBuf::from(&debug_mode_script_path).exists() {
         println!(
             "Debug mode script not found for chapter {}. Building without debug mode.",

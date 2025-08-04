@@ -105,7 +105,7 @@ export const SidePanel = ({
             ))}
             <div className="mt-auto flex flex-col gap-3">
               <LaunchGameButton files={filesForLaunchingGame} />
-              {isYours && isReviewed && <SubmitToReviewButton branch={branch} />}
+              {isYours && isReviewed && <SubmitToReviewButton branch={branch} files={files} changes={editedLines} />}
               {isYours && (
                 <SaveChangesButton branch={branch} files={files} changes={editedLines} onSaveSuccess={onSaveSuccess} />
               )}

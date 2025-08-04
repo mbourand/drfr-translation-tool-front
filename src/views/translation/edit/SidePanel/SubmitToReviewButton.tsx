@@ -42,8 +42,11 @@ export const SubmitToReviewButton = ({ branch, files, changes }: SubmitToReviewB
   const saveAndSubmitQuery = useMutation({
     mutationKey: ['save-and-submit', branch],
     mutationFn: async (branch: string) => {
+      console.log('Saving changes before submitting to review...')
       await saveQuery.mutateAsync()
+      console.log('Changes saved, now submitting to review...')
       await submitQuery.mutateAsync(branch)
+      console.log('Submitted to review successfully.')
     },
     onSuccess: async () => {
       setIsModalVisible(false)

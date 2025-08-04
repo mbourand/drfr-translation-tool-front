@@ -78,7 +78,7 @@ export const patchAndLaunchGame = async ({
         await rename(absoluteFilePathInGameFolder, originalFilePathInGameFolder)
       }
 
-      const matches = originalFilePathInGameFolder.match(/chapitre-(\d+)/)
+      const matches = absoluteFilePathInGitFolder.match(/chapitre-(\d+)/)
       if (!matches) {
         throw new Error(`Chapter could not be determined from file path: ${file.pathInGitFolder}`)
       }
@@ -89,7 +89,7 @@ export const patchAndLaunchGame = async ({
         utmtCliFolderPath: utmtCliFolder,
         gitChapterFolderPath: chapterDirInGitFolder,
         gitRootFolderPath: gitFolder,
-        chapter: parseInt(matches[2], 10)
+        chapter: parseInt(matches[1], 10)
       })
 
       await rename(outputFilePath, absoluteFilePathInGameFolder)
