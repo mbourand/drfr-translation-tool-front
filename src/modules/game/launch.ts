@@ -78,12 +78,18 @@ export const patchAndLaunchGame = async ({
         await rename(absoluteFilePathInGameFolder, originalFilePathInGameFolder)
       }
 
+      const matches = originalFilePathInGameFolder.match(/chapitre-(\d+)/)
+      if (!matches) {
+        throw new Error(`Chapter could not be determined from file path: ${file.pathInGitFolder}`)
+      }
+
       await invoke(RUST_COMMANDS.IMPORT_STRINGS, {
         sourceDataWinPath: originalFilePathInGameFolder,
         outputDataWinPath: outputFilePath,
         utmtCliFolderPath: utmtCliFolder,
         gitChapterFolderPath: chapterDirInGitFolder,
-        gitRootFolderPath: gitFolder
+        gitRootFolderPath: gitFolder,
+        chapter: parseInt(matches[2], 10)
       })
 
       await rename(outputFilePath, absoluteFilePathInGameFolder)

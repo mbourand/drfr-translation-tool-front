@@ -11,6 +11,7 @@ async fn import_strings(
     git_chapter_folder_path: &str,
     git_root_folder_path: &str,
     output_data_win_path: &str,
+    chapter: u32,
 ) -> Result<(), String> {
     let import_script_path = format!(
         "{}/Script/UMT/DRFR/ImporterToutTranslationTool.csx",
@@ -18,12 +19,27 @@ async fn import_strings(
     );
     let utmt_cli_exe_path = format!("{}/UndertaleModCli.exe", utmt_cli_folder_path);
 
+    let debug_mode_script_path = format!(
+        "{}/Script/UMT/DRFR/Mode Debug (Chapitre {}).csx",
+        git_root_folder_path,
+        chapter.to_string()
+    );
+
+    if !PathBuf::from(&debug_mode_script_path).exists() {
+        println!(
+            "Debug mode script not found for chapter {}. Building without debug mode.",
+            chapter.to_string()
+        );
+    }
+
     let mut utmt_command = Command::new(utmt_cli_exe_path)
         .args([
             "load",
             &source_data_win_path,
             "-s",
             &import_script_path,
+            "-s",
+            &debug_mode_script_path,
             "-o",
             &output_data_win_path,
         ])
@@ -81,8 +97,8 @@ fn unzip_file(path: String, target_dir: String) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn is_dev () -> bool {
-	return tauri::is_dev();
+fn is_dev() -> bool {
+    return tauri::is_dev();
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -101,7 +117,7 @@ pub fn run() {
             run_game_executable,
             import_strings,
             unzip_file,
-			is_dev,
+            is_dev,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
