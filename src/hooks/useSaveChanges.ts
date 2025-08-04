@@ -30,7 +30,7 @@ export const useSaveChanges = ({
   changes: Map<string, string>
   files: FileType[]
   branch: string
-  onSaveSuccess: () => void
+  onSaveSuccess?: () => void
 }) => {
   return useMutation({
     mutationKey: ['save-changes'],
@@ -58,6 +58,6 @@ export const useSaveChanges = ({
         }
       })
     },
-    onSuccess: () => onSaveSuccess()
+    onSuccess: onSaveSuccess
   })
 }

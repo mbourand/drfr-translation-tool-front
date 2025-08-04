@@ -6,16 +6,20 @@ import { useMutation } from '@tanstack/react-query'
 import { fetchData } from '../../../../modules/fetching/fetcher'
 import { useNavigate } from 'react-router'
 import { TRANSLATION_APP_PAGES } from '../../../../routes/pages/routes'
+import { FileType } from './SidePanel'
+import { useSaveChanges } from '../../../../hooks/useSaveChanges'
 
 type SubmitToReviewButtonProps = {
   branch: string
+  files: FileType[]
+  changes: Map<string, string>
 }
 
-export const SubmitToReviewButton = ({ branch }: SubmitToReviewButtonProps) => {
+export const SubmitToReviewButton = ({ branch, files, changes }: SubmitToReviewButtonProps) => {
   const [isModalVisible, setIsModalVisible] = useState(false)
   const navigate = useNavigate()
 
-  const { isPending, mutate } = useMutation({
+  const submitQuery = useMutation({
     mutationKey: ['submit-to-review', branch],
     mutationFn: async (branch: string) => {
       const userInfos = await store.get<StoreUserInfos>(STORE_KEYS.USER_INFOS)
@@ -26,6 +30,23 @@ export const SubmitToReviewButton = ({ branch }: SubmitToReviewButtonProps) => {
         headers: { Authorization: `Bearer ${userInfos.accessToken}` },
         body: { branch }
       })
+    }
+  })
+
+  const saveQuery = useSaveChanges({
+    branch,
+    files,
+    changes
+  })
+
+  const saveAndSubmitQuery = useMutation({
+    mutationKey: ['save-and-submit', branch],
+    mutationFn: async (branch: string) => {
+      console.log('Saving changes before submitting to review...')
+      await saveQuery.mutateAsync()
+      console.log('Changes saved, now submitting to review...')
+      await submitQuery.mutateAsync(branch)
+      console.log('Submitted to review successfully.')
     },
     onSuccess: async () => {
       setIsModalVisible(false)
@@ -47,8 +68,12 @@ export const SubmitToReviewButton = ({ branch }: SubmitToReviewButtonProps) => {
             <button className="float-right btn btn-ghost" onClick={() => setIsModalVisible(false)}>
               Annuler
             </button>
-            <button disabled={isPending} className="float-right btn btn-primary" onClick={() => mutate(branch)}>
-              {isPending && <span className="loading loading-spinner" />}
+            <button
+              disabled={saveAndSubmitQuery.isPending}
+              className="float-right btn btn-primary"
+              onClick={() => saveAndSubmitQuery.mutate(branch)}
+            >
+              {saveAndSubmitQuery.isPending && <span className="loading loading-spinner" />}
               Soumettre
             </button>
           </>
