@@ -181,7 +181,7 @@ export const ReviewTranslationView = () => {
           category: branchFile.category,
           lineNumber: line.lineNumber,
           original: line.original,
-          oldTranslated: masterFile.lines[j].translated,
+          oldTranslated: masterFile.lines[j]?.translated ?? '[DELETED_LINE]',
           translated: line.translated
         })
         if (!hasChanges && line.translated !== atCreationFile.lines[j].translated) {
