@@ -35,6 +35,8 @@ export const useSaveChanges = ({
   return useMutation({
     mutationKey: ['save-changes'],
     mutationFn: async () => {
+      if (changes.size === 0) return
+
       const userInfos = await store.get<StoreUserInfos>(STORE_KEYS.USER_INFOS)
       if (!userInfos) throw new Error('No token found')
 
